@@ -1,0 +1,816 @@
+<!DOCTYPE html>
+<html lang="mn">
+<head>
+<meta charset="UTF-8">
+<title>HMS Operator Input — Reference Plant A</title>
+<style>
+  :root {
+    --bg: #f4f6f8;
+    --card-bg: #ffffff;
+    --border: #d0d7de;
+    --text: #1f2328;
+    --muted: #57606a;
+    --accent: #0969da;
+    --accent-hover: #0860c7;
+    --warn: #bf8700;
+    --ok: #1a7f37;
+    --row-alt: #f6f8fa;
+    --pri: #0969da;
+    --sec: #8250df;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    margin: 0;
+    padding: 16px;
+    font-size: 14px;
+  }
+  header.app-header {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 18px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    flex-wrap: wrap;
+  }
+  header.app-header h1 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+  }
+  header.app-header .sub {
+    color: var(--muted);
+    font-size: 12px;
+  }
+  header .meta {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-left: auto;
+  }
+  header .meta label {
+    font-size: 12px;
+    color: var(--muted);
+  }
+  header .meta input, header .meta select {
+    font-size: 13px;
+    padding: 4px 6px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    background: white;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  @media (max-width: 1000px) {
+    .grid { grid-template-columns: 1fr; }
+  }
+  .card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 16px;
+  }
+  .card h2 {
+    margin: 0 0 10px 0;
+    font-size: 14px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+  .card h2 .badge {
+    font-size: 10px;
+    background: #ddf4ff;
+    color: var(--accent);
+    padding: 2px 6px;
+    border-radius: 10px;
+    font-weight: 500;
+  }
+  .card h2 .badge.warn { background: #fff8c5; color: var(--warn); }
+  .card h2 .badge.lab  { background: #dafbe1; color: var(--ok); }
+  .row {
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 0;
+  }
+  .row label {
+    font-size: 13px;
+    color: var(--text);
+  }
+  .row .hint {
+    font-size: 11px;
+    color: var(--muted);
+  }
+  .row input[type=number], .row input[type=text] {
+    width: 90px;
+    padding: 4px 6px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    font-size: 13px;
+    text-align: right;
+  }
+  .row .unit {
+    font-size: 11px;
+    color: var(--muted);
+    width: 50px;
+  }
+  /* Derived (engine-computed, read-only) value — operator does NOT type this */
+  .row .derived {
+    width: 90px;
+    padding: 4px 6px;
+    border: 1px dashed var(--border);
+    border-radius: 4px;
+    font-size: 13px;
+    text-align: right;
+    color: var(--muted);
+    background: var(--row-alt);
+    cursor: not-allowed;
+  }
+  .row .derived .auto-tag {
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--accent);
+    float: left;
+    line-height: 18px;
+  }
+  /* Two-column (Primary / Secondary) rows */
+  .row.dual {
+    grid-template-columns: 1fr 90px 90px 50px;
+  }
+  .col-head {
+    display: grid;
+    grid-template-columns: 1fr 90px 90px 50px;
+    gap: 8px;
+    font-size: 11px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding-bottom: 4px;
+    border-bottom: 1px dashed var(--border);
+    margin-bottom: 4px;
+  }
+  .col-head .pri { color: var(--pri); text-align: center; font-weight: 600; }
+  .col-head .sec { color: var(--sec); text-align: center; font-weight: 600; }
+  .seam-row {
+    display: grid;
+    grid-template-columns: 1fr 80px 30px;
+    gap: 8px;
+    align-items: center;
+    padding: 3px 0;
+  }
+  .seam-row input[type=text] { width: 100%; text-align: left; }
+  .seam-row input[type=number] { width: 100%; }
+  .seam-row button {
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--muted);
+    cursor: pointer;
+    padding: 2px 4px;
+  }
+  .add-seam-btn {
+    margin-top: 6px;
+    background: none;
+    border: 1px dashed var(--border);
+    border-radius: 4px;
+    padding: 4px 8px;
+    cursor: pointer;
+    color: var(--muted);
+    font-size: 12px;
+  }
+  .add-seam-btn:hover { background: var(--row-alt); color: var(--text); }
+  .checkbox-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 0;
+    font-size: 13px;
+  }
+  textarea {
+    width: 100%;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 6px 8px;
+    font-family: inherit;
+    font-size: 13px;
+    resize: vertical;
+    min-height: 60px;
+  }
+  footer.app-footer {
+    margin-top: 16px;
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  button.primary {
+    background: var(--accent);
+    color: white;
+    border: 0;
+    border-radius: 6px;
+    padding: 8px 16px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+  }
+  button.primary:hover { background: var(--accent-hover); }
+  button.ghost {
+    background: white;
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 8px 14px;
+    font-size: 13px;
+    cursor: pointer;
+  }
+  button.ghost:hover { background: var(--row-alt); }
+  .status {
+    margin-left: auto;
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .status.ok { color: var(--ok); }
+  .note {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 6px;
+    font-style: italic;
+  }
+  details { margin-top: 8px; }
+  details summary {
+    cursor: pointer;
+    font-size: 12px;
+    color: var(--accent);
+  }
+  details summary:hover { text-decoration: underline; }
+  pre.preview {
+    background: #f6f8fa;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 10px;
+    font-size: 11px;
+    overflow: auto;
+    max-height: 300px;
+    margin-top: 6px;
+  }
+</style>
+</head>
+<body>
+
+<header class="app-header">
+  <div>
+    <h1>HMS Operator Input</h1>
+    <div class="sub">Reference Plant A — Coarse Coal Circuit · Phase 1 Shadow Mode</div>
+  </div>
+  <div class="meta">
+    <label>Огноо <input type="date" id="meta-date"></label>
+    <label>Ээлж
+      <select id="meta-shift">
+        <option value="morning">Өглөө (08–16)</option>
+        <option value="evening">Үдээс (16–00)</option>
+        <option value="night">Шөнө (00–08)</option>
+      </select>
+    </label>
+    <label>Оператор <input type="text" id="meta-operator" placeholder="Нэр..." style="width: 140px;"></label>
+  </div>
+</header>
+
+<div class="grid">
+
+  <!-- =========== CARD 1: FEED QUALITY =========== -->
+  <section class="card" data-section="feed">
+    <h2>Тэжээлийн чанар <span class="badge lab">2ц тутам / ээлж</span></h2>
+
+    <div class="row">
+      <label>Түүхий нүүрсний үнслэг</label>
+      <input type="number" step="0.1" data-key="raw_ash_pct" placeholder="11.0">
+      <span class="unit">%</span>
+    </div>
+    <div class="row">
+      <label>Чийглэг</label>
+      <input type="number" step="0.1" data-key="moisture_pct" placeholder="8.5">
+      <span class="unit">%</span>
+    </div>
+    <div class="row">
+      <label>Top size <span class="hint">(50мм-ээс ихгүй 5%)</span></label>
+      <input type="number" step="1" data-key="top_size_mm" placeholder="50">
+      <span class="unit">мм</span>
+    </div>
+    <div class="row">
+      <label>−0.5 мм fines</label>
+      <input type="number" step="0.5" data-key="fines_pct" placeholder="12">
+      <span class="unit">%</span>
+    </div>
+    <div class="row">
+      <label>NDM (±0.1 хүрээ) <span class="hint">washability-аас тооцоолно</span></label>
+      <span class="derived" id="ndm-derived"
+            title="Идэвхтэй seam-уудын washability ±0.1 g/cm³ муруйгаас blend хийж хөдөлгүүр тооцоолно. Оператор гараар оруулахгүй — Doc 02 §5.3.">
+        <span class="auto-tag">auto</span>—</span>
+      <span class="unit">%</span>
+    </div>
+
+    <div style="margin-top: 12px;">
+      <div style="font-size: 12px; color: var(--muted); margin-bottom: 4px;">
+        Идэвхтэй seam-ууд (blend харьцаа)
+      </div>
+      <div id="seams-list">
+        <div class="seam-row">
+          <input type="text" placeholder="Seam нэр (жишээ: TT-3)" data-seam-name>
+          <input type="number" placeholder="%" min="0" max="100" data-seam-ratio>
+          <button type="button" onclick="removeSeam(this)">×</button>
+        </div>
+      </div>
+      <button type="button" class="add-seam-btn" onclick="addSeam()">+ Seam нэмэх</button>
+    </div>
+  </section>
+
+  <!-- =========== CARD 2: PROCESS PV =========== -->
+  <section class="card" data-section="pv">
+    <h2>Процессийн PV (одоогийн төлөв) <span class="badge">Pri | Sec</span></h2>
+
+    <div class="col-head">
+      <span></span>
+      <span class="pri">PRIMARY</span>
+      <span class="sec">SECONDARY</span>
+      <span></span>
+    </div>
+
+    <div class="row dual">
+      <label>Орчны нягт (γ-meter)</label>
+      <input type="number" step="0.01" data-key="pv_media_density_pri" placeholder="1.33">
+      <input type="number" step="0.01" data-key="pv_media_density_sec" placeholder="1.50">
+      <span class="unit">g/cm³</span>
+    </div>
+    <div class="row dual">
+      <label>Циклоны оролтын даралт</label>
+      <input type="number" step="1" data-key="pv_inlet_pressure_pri" placeholder="180">
+      <input type="number" step="1" data-key="pv_inlet_pressure_sec" placeholder="160">
+      <span class="unit">kPa</span>
+    </div>
+    <div class="row dual">
+      <label>Тэжээлийн урсгал (slurry)</label>
+      <input type="number" step="10" data-key="pv_feed_flow_pri" placeholder="2400">
+      <input type="number" step="10" data-key="pv_feed_flow_sec" placeholder="1200">
+      <span class="unit">m³/h</span>
+    </div>
+    <div class="row dual">
+      <label>Насосны хурд (VFD)</label>
+      <input type="number" step="1" data-key="pv_pump_speed_pri" placeholder="78">
+      <input type="number" step="1" data-key="pv_pump_speed_sec" placeholder="72">
+      <span class="unit">%</span>
+    </div>
+    <div class="row dual">
+      <label>Насосны моторын гүйдэл</label>
+      <input type="number" step="1" data-key="pv_pump_current_pri" placeholder="320">
+      <input type="number" step="1" data-key="pv_pump_current_sec" placeholder="180">
+      <span class="unit">A</span>
+    </div>
+    <div class="row dual">
+      <label>Зумпны түвшин</label>
+      <input type="number" step="1" data-key="pv_sump_level_pri" placeholder="65">
+      <input type="number" step="1" data-key="pv_sump_level_sec" placeholder="60">
+      <span class="unit">%</span>
+    </div>
+    <div class="row dual">
+      <label>Mag separator гүйдэл</label>
+      <input type="number" step="0.5" data-key="pv_mag_sep_current_pri" placeholder="—">
+      <input type="number" step="0.5" data-key="pv_mag_sep_current_sec" placeholder="—">
+      <span class="unit">A</span>
+    </div>
+    <div class="row">
+      <label>Туузан жин (нийт ROM)</label>
+      <input type="number" step="10" data-key="pv_belt_scale_tph" placeholder="900">
+      <span class="unit">t/h</span>
+    </div>
+    <p class="note">Phase 1 shadow: PLC интеграц гартал гар оруулга.</p>
+  </section>
+
+  <!-- =========== CARD 3: SETPOINTS =========== -->
+  <section class="card" data-section="sp">
+    <h2>Одоогийн SP (оператор тавьсан) <span class="badge">SP</span></h2>
+
+    <div class="col-head">
+      <span></span>
+      <span class="pri">PRIMARY</span>
+      <span class="sec">SECONDARY</span>
+      <span></span>
+    </div>
+
+    <div class="row dual">
+      <label>Media density SP</label>
+      <input type="number" step="0.01" data-key="sp_media_density_pri" placeholder="1.35">
+      <input type="number" step="0.01" data-key="sp_media_density_sec" placeholder="1.52">
+      <span class="unit">g/cm³</span>
+    </div>
+    <div class="row dual">
+      <label>Pump speed SP</label>
+      <input type="number" step="1" data-key="sp_pump_speed_pri" placeholder="78">
+      <input type="number" step="1" data-key="sp_pump_speed_sec" placeholder="72">
+      <span class="unit">%</span>
+    </div>
+
+    <div style="margin-top: 12px; padding-top: 10px; border-top: 1px dashed var(--border);">
+      <div style="font-size: 12px; color: var(--muted); margin-bottom: 6px;">
+        Бүтээгдэхүүний зорилт (ash-priority горим)
+      </div>
+      <div class="row">
+        <label>Коксжих нүүрсний зорилтот ash</label>
+        <input type="number" step="0.1" data-key="target_ash_coking" placeholder="10.5">
+        <span class="unit">%</span>
+      </div>
+      <div class="row">
+        <label>Эрчим хүчний нүүрсний зорилтот ash</label>
+        <input type="number" step="0.1" data-key="target_ash_thermal" placeholder="22.0">
+        <span class="unit">%</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- =========== CARD 4: LAB RESULTS =========== -->
+  <section class="card" data-section="lab">
+    <h2>Лабын үр дүн <span class="badge lab">12ц цикл / ad-hoc</span></h2>
+
+    <div class="row">
+      <label>Дээж авсан цаг</label>
+      <input type="time" data-key="lab_sample_time" style="width: 110px;">
+      <span class="unit"></span>
+    </div>
+    <div class="row">
+      <label>Дээжний төрөл</label>
+      <select data-key="lab_sample_type" style="width: 130px; padding: 4px 6px; border: 1px solid var(--border); border-radius: 4px; font-size: 13px;">
+        <option value="shift_baseline">Ээлжийн суурь</option>
+        <option value="adhoc_upset">Ad-hoc (upset)</option>
+      </select>
+      <span class="unit"></span>
+    </div>
+
+    <div style="margin-top: 8px; padding-top: 6px; border-top: 1px dashed var(--border);"></div>
+
+    <div class="row">
+      <label>Primary OF ash (коксжих баяжмал)</label>
+      <input type="number" step="0.1" data-key="lab_pri_of_ash" placeholder="10.4">
+      <span class="unit">%</span>
+    </div>
+    <div class="row">
+      <label>Secondary OF ash (эрчим хүчний)</label>
+      <input type="number" step="0.1" data-key="lab_sec_of_ash" placeholder="22.5">
+      <span class="unit">%</span>
+    </div>
+    <div class="row">
+      <label>Final UF ash (хаягдал)</label>
+      <input type="number" step="0.1" data-key="lab_uf_ash" placeholder="62.0">
+      <span class="unit">%</span>
+    </div>
+    <div class="row">
+      <label>Баяжмалын чийглэг (Primary)</label>
+      <input type="number" step="0.1" data-key="lab_pri_moisture" placeholder="8.0">
+      <span class="unit">%</span>
+    </div>
+    <div class="row">
+      <label>Тооцоологдсон yield (Primary)</label>
+      <input type="number" step="0.1" data-key="lab_pri_yield" placeholder="75.0">
+      <span class="unit">%</span>
+    </div>
+    <div class="row">
+      <label>Тооцоологдсон yield (Secondary)</label>
+      <input type="number" step="0.1" data-key="lab_sec_yield" placeholder="25.0">
+      <span class="unit">%</span>
+    </div>
+  </section>
+
+  <!-- =========== CARD 5: EQUIPMENT MEASUREMENTS =========== -->
+  <section class="card" data-section="equipment">
+    <h2>Тоног төхөөрөмжийн хэмжилт <span class="badge warn">7 хоног / зогсолт</span></h2>
+
+    <div class="col-head">
+      <span></span>
+      <span class="pri">PRIMARY</span>
+      <span class="sec">SECONDARY</span>
+      <span></span>
+    </div>
+
+    <div class="row dual">
+      <label>Vortex finder Ø <span class="hint">(дизайн: Pri 670 / Sec 535)</span></label>
+      <input type="number" step="1" data-key="eq_vortex_dia_pri" placeholder="670">
+      <input type="number" step="1" data-key="eq_vortex_dia_sec" placeholder="535">
+      <span class="unit">мм</span>
+    </div>
+    <div class="row dual">
+      <label>Spigot/apex Ø <span class="hint">(дизайн: Pri 540 / Sec 400)</span></label>
+      <input type="number" step="1" data-key="eq_spigot_dia_pri" placeholder="540">
+      <input type="number" step="1" data-key="eq_spigot_dia_sec" placeholder="400">
+      <span class="unit">мм</span>
+    </div>
+    <div class="row dual">
+      <label>Доторлогооны зузаан <span class="hint">(дизайн: 25 мм)</span></label>
+      <input type="number" step="0.5" data-key="eq_liner_thickness_pri" placeholder="22">
+      <input type="number" step="0.5" data-key="eq_liner_thickness_sec" placeholder="23">
+      <span class="unit">мм</span>
+    </div>
+    <div class="row dual">
+      <label>Running hours (циклон)</label>
+      <input type="number" step="10" data-key="eq_run_hours_cyclone_pri" placeholder="4200">
+      <input type="number" step="10" data-key="eq_run_hours_cyclone_sec" placeholder="3800">
+      <span class="unit">ц</span>
+    </div>
+    <div class="row dual">
+      <label>Running hours (насос)</label>
+      <input type="number" step="10" data-key="eq_run_hours_pump_pri" placeholder="2100">
+      <input type="number" step="10" data-key="eq_run_hours_pump_sec" placeholder="1900">
+      <span class="unit">ц</span>
+    </div>
+    <div class="row dual">
+      <label>Pump impeller төлөв (1-5)</label>
+      <input type="number" min="1" max="5" step="1" data-key="eq_impeller_score_pri" placeholder="3">
+      <input type="number" min="1" max="5" step="1" data-key="eq_impeller_score_sec" placeholder="4">
+      <span class="unit">балл</span>
+    </div>
+    <p class="note">1=шинэ, 5=солих ёстой. Зогсолтын үеэр хэмжилт хийгдсэн өдрийн өгөгдөл.</p>
+  </section>
+
+  <!-- =========== CARD 6: SHIFT NOTES =========== -->
+  <section class="card" data-section="notes">
+    <h2>Ээлжийн тэмдэглэл &amp; гажиг нөхцөл</h2>
+
+    <div style="font-size: 12px; color: var(--muted); margin-bottom: 4px;">Ажиглагдсан гажиг нөхцөл:</div>
+    <label class="checkbox-row">
+      <input type="checkbox" data-key="anomaly_rope_discharge_pri"> Rope discharge — Primary
+    </label>
+    <label class="checkbox-row">
+      <input type="checkbox" data-key="anomaly_rope_discharge_sec"> Rope discharge — Secondary
+    </label>
+    <label class="checkbox-row">
+      <input type="checkbox" data-key="anomaly_cavitation"> Кавитацийн дохио (хяхтай дуу, чичиргээ)
+    </label>
+    <label class="checkbox-row">
+      <input type="checkbox" data-key="anomaly_sump_overflow"> Зумп халих / гоожилт
+    </label>
+    <label class="checkbox-row">
+      <input type="checkbox" data-key="anomaly_pressure_swing"> Даралтын огцом савлалт
+    </label>
+    <label class="checkbox-row">
+      <input type="checkbox" data-key="anomaly_oxidized_coal"> Баяжмал дээр хөөс зангирах
+    </label>
+
+    <div style="margin-top: 12px; padding-top: 10px; border-top: 1px dashed var(--border);"></div>
+
+    <div class="row">
+      <label>Магнетит make-up (ээлжид)</label>
+      <input type="number" step="10" data-key="magnetite_makeup_kg" placeholder="450">
+      <span class="unit">кг</span>
+    </div>
+    <div class="row">
+      <label>Цэвэр усны нэмэлт</label>
+      <input type="number" step="0.5" data-key="water_addition_m3" placeholder="—">
+      <span class="unit">m³</span>
+    </div>
+
+    <div style="margin-top: 10px;">
+      <label style="font-size: 12px; color: var(--muted); display: block; margin-bottom: 4px;">
+        Чөлөөт текст (онцгой үйл явдал, өмнөх ээлжийн handover):
+      </label>
+      <textarea data-key="free_text" placeholder="Жишээ нь: 14:30-д Primary spigot дээр чулуу гацаж даралт 5 минут унасан. Зогсолтгүйгээр цэвэрлэв."></textarea>
+    </div>
+  </section>
+
+</div>
+
+<footer class="app-footer">
+  <button type="button" class="primary" onclick="submitForm()">Submit (JSON + localStorage)</button>
+  <button type="button" class="ghost" onclick="loadFromStorage()">Сүүлийн хадгалсныг сэргээх</button>
+  <button type="button" class="ghost" onclick="clearForm()">Цэвэрлэх</button>
+  <span class="status" id="status">Бэлэн — гараар бөглөж эхлээрэй.</span>
+</footer>
+
+<details style="margin-top: 12px;">
+  <summary>Submit хийсэн JSON-ыг энд харах (debug)</summary>
+  <pre class="preview" id="json-preview">—</pre>
+</details>
+
+<script>
+// ============================================================
+// HMS Operator Input — Phase 1 Mock
+// Backend-гүй: console.log + localStorage
+// ============================================================
+
+const STORAGE_KEY = 'hms_operator_input_v1';
+
+// Default date to today on load
+document.getElementById('meta-date').valueAsDate = new Date();
+
+function addSeam() {
+  const list = document.getElementById('seams-list');
+  const row = document.createElement('div');
+  row.className = 'seam-row';
+  row.innerHTML = `
+    <input type="text" placeholder="Seam нэр" data-seam-name>
+    <input type="number" placeholder="%" min="0" max="100" data-seam-ratio>
+    <button type="button" onclick="removeSeam(this)">×</button>
+  `;
+  list.appendChild(row);
+}
+
+function removeSeam(btn) {
+  const list = document.getElementById('seams-list');
+  if (list.children.length > 1) {
+    btn.parentElement.remove();
+  } else {
+    // Last one: just clear inputs
+    btn.parentElement.querySelectorAll('input').forEach(i => i.value = '');
+  }
+}
+
+function collectData() {
+  const data = {
+    schema_version: 1,
+    submitted_at: new Date().toISOString(),
+    meta: {
+      date: document.getElementById('meta-date').value,
+      shift: document.getElementById('meta-shift').value,
+      operator: document.getElementById('meta-operator').value.trim()
+    },
+    feed: {},
+    seams: [],
+    pv: {},
+    sp: {},
+    lab: {},
+    equipment: {},
+    notes: {
+      anomalies: {},
+      free_text: ''
+    }
+  };
+
+  // Collect all keyed inputs
+  document.querySelectorAll('[data-key]').forEach(el => {
+    const key = el.dataset.key;
+    let val;
+    if (el.type === 'checkbox') {
+      val = el.checked;
+    } else if (el.type === 'number') {
+      val = el.value === '' ? null : parseFloat(el.value);
+    } else {
+      val = el.value.trim() === '' ? null : el.value.trim();
+    }
+    // Route by key prefix
+    if (key.startsWith('pv_'))           data.pv[key.replace('pv_','')] = val;
+    else if (key.startsWith('sp_') || key.startsWith('target_'))
+                                          data.sp[key] = val;
+    else if (key.startsWith('lab_'))     data.lab[key.replace('lab_','')] = val;
+    else if (key.startsWith('eq_'))      data.equipment[key.replace('eq_','')] = val;
+    else if (key.startsWith('anomaly_')) data.notes.anomalies[key.replace('anomaly_','')] = val;
+    else if (key === 'free_text')        data.notes.free_text = val || '';
+    else if (key === 'magnetite_makeup_kg' || key === 'water_addition_m3')
+                                          data.notes[key] = val;
+    else                                  data.feed[key] = val;
+  });
+
+  // Collect seams
+  document.querySelectorAll('#seams-list .seam-row').forEach(row => {
+    const name = row.querySelector('[data-seam-name]').value.trim();
+    const ratio = row.querySelector('[data-seam-ratio]').value;
+    if (name || ratio) {
+      data.seams.push({
+        name: name || null,
+        ratio_pct: ratio === '' ? null : parseFloat(ratio)
+      });
+    }
+  });
+
+  return data;
+}
+
+function submitForm() {
+  const data = collectData();
+  const json = JSON.stringify(data, null, 2);
+
+  // Validate basic
+  if (!data.meta.operator) {
+    setStatus('Оператор нэр оруулна уу.', 'warn');
+    document.getElementById('meta-operator').focus();
+    return;
+  }
+
+  // Save to localStorage
+  try {
+    localStorage.setItem(STORAGE_KEY, json);
+  } catch (e) {
+    console.warn('localStorage save failed:', e);
+  }
+
+  // Console
+  console.log('=== HMS Operator Input submitted ===');
+  console.log(data);
+  console.log('JSON:\n' + json);
+
+  // Preview
+  document.getElementById('json-preview').textContent = json;
+
+  setStatus(
+    `✓ Хадгаллаа · ${data.meta.date} ${data.meta.shift} · ${data.meta.operator} · console + localStorage`,
+    'ok'
+  );
+}
+
+function loadFromStorage() {
+  const json = localStorage.getItem(STORAGE_KEY);
+  if (!json) {
+    setStatus('localStorage хоосон байна.', 'warn');
+    return;
+  }
+  let data;
+  try { data = JSON.parse(json); }
+  catch (e) { setStatus('JSON parse алдаа: ' + e.message, 'warn'); return; }
+
+  // Meta
+  if (data.meta) {
+    if (data.meta.date) document.getElementById('meta-date').value = data.meta.date;
+    if (data.meta.shift) document.getElementById('meta-shift').value = data.meta.shift;
+    if (data.meta.operator) document.getElementById('meta-operator').value = data.meta.operator;
+  }
+
+  // Flatten everything back to data-key map
+  const flat = {};
+  for (const [k, v] of Object.entries(data.feed || {}))           flat[k] = v;
+  for (const [k, v] of Object.entries(data.pv || {}))             flat['pv_' + k] = v;
+  for (const [k, v] of Object.entries(data.sp || {}))             flat[k] = v;
+  for (const [k, v] of Object.entries(data.lab || {}))            flat['lab_' + k] = v;
+  for (const [k, v] of Object.entries(data.equipment || {}))      flat['eq_' + k] = v;
+  for (const [k, v] of Object.entries(data.notes?.anomalies || {})) flat['anomaly_' + k] = v;
+  if (data.notes?.free_text) flat.free_text = data.notes.free_text;
+  if (data.notes?.magnetite_makeup_kg != null) flat.magnetite_makeup_kg = data.notes.magnetite_makeup_kg;
+  if (data.notes?.water_addition_m3 != null) flat.water_addition_m3 = data.notes.water_addition_m3;
+
+  document.querySelectorAll('[data-key]').forEach(el => {
+    const v = flat[el.dataset.key];
+    if (v === undefined || v === null) return;
+    if (el.type === 'checkbox') el.checked = !!v;
+    else el.value = v;
+  });
+
+  // Seams
+  const seamsList = document.getElementById('seams-list');
+  seamsList.innerHTML = '';
+  (data.seams || []).forEach(s => {
+    const row = document.createElement('div');
+    row.className = 'seam-row';
+    row.innerHTML = `
+      <input type="text" data-seam-name>
+      <input type="number" min="0" max="100" data-seam-ratio>
+      <button type="button" onclick="removeSeam(this)">×</button>
+    `;
+    row.querySelector('[data-seam-name]').value = s.name || '';
+    row.querySelector('[data-seam-ratio]').value = s.ratio_pct ?? '';
+    seamsList.appendChild(row);
+  });
+  if (seamsList.children.length === 0) addSeam();
+
+  setStatus(`Сэргээлээ — submitted_at: ${data.submitted_at || '(unknown)'}`, 'ok');
+}
+
+function clearForm() {
+  if (!confirm('Бүх талбарыг цэвэрлэх үү?')) return;
+  document.querySelectorAll('[data-key]').forEach(el => {
+    if (el.type === 'checkbox') el.checked = false;
+    else el.value = '';
+  });
+  document.getElementById('meta-operator').value = '';
+  // Reset seams to one empty row
+  const seamsList = document.getElementById('seams-list');
+  seamsList.innerHTML = `
+    <div class="seam-row">
+      <input type="text" placeholder="Seam нэр" data-seam-name>
+      <input type="number" placeholder="%" min="0" max="100" data-seam-ratio>
+      <button type="button" onclick="removeSeam(this)">×</button>
+    </div>
+  `;
+  document.getElementById('json-preview').textContent = '—';
+  setStatus('Цэвэрлэлээ.', '');
+}
+
+function setStatus(msg, kind) {
+  const el = document.getElementById('status');
+  el.textContent = msg;
+  el.className = 'status' + (kind ? ' ' + kind : '');
+}
+</script>
+
+</body>
+</html>

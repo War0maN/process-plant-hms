@@ -1,0 +1,8 @@
+# Machine-local Claude Code тохиргоо (permission allowlist г.м)
+.claude/settings.local.json
+
+# OS / editor / OneDrive түр файлууд
+Thumbs.db
+.DS_Store
+~$*
+*.tmp

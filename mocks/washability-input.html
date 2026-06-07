@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="mn">
+<head>
+<meta charset="UTF-8">
+<title>Washability Reference Input — Reference Plant A</title>
+<style>
+  :root {
+    --bg: #f4f6f8; --card-bg: #ffffff; --border: #d0d7de; --text: #1f2328;
+    --muted: #57606a; --accent: #0969da; --accent-hover: #0860c7;
+    --warn: #bf8700; --ok: #1a7f37; --bad: #cf222e; --row-alt: #f6f8fa;
+    --calc: #6639ba;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg); color: var(--text); margin: 0; padding: 16px; font-size: 14px;
+  }
+  header.app-header {
+    background: var(--card-bg); border: 1px solid var(--border); border-radius: 8px;
+    padding: 14px 18px; margin-bottom: 16px; display: flex; align-items: center; gap: 18px; flex-wrap: wrap;
+  }
+  header.app-header h1 { margin: 0; font-size: 18px; font-weight: 600; }
+  header.app-header .sub { color: var(--muted); font-size: 12px; }
+  header .meta { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-left: auto; }
+  header .meta label { font-size: 12px; color: var(--muted); }
+  header .meta input { font-size: 13px; padding: 4px 6px; border: 1px solid var(--border); border-radius: 4px; background: white; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 1000px) { .grid { grid-template-columns: 1fr; } }
+  .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; }
+  .card.full { grid-column: 1 / -1; }
+  .card h2 {
+    margin: 0 0 10px 0; font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 8px;
+    padding-bottom: 8px; border-bottom: 1px solid var(--border);
+  }
+  .card h2 .badge { font-size: 10px; background: #ddf4ff; color: var(--accent); padding: 2px 6px; border-radius: 10px; font-weight: 500; }
+  .card h2 .badge.ref { background: #fff8c5; color: var(--warn); }
+  .card h2 .badge.calc { background: #efe7fb; color: var(--calc); }
+  .qgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 2px 16px; }
+  .row { display: grid; grid-template-columns: 1fr auto auto; align-items: center; gap: 8px; padding: 3px 0; }
+  .row label { font-size: 13px; color: var(--text); }
+  .row .hint { font-size: 11px; color: var(--muted); }
+  .row input[type=number], .row input[type=text], .row input[type=date] {
+    width: 96px; padding: 4px 6px; border: 1px solid var(--border); border-radius: 4px; font-size: 13px;
+  }
+  .row input[type=number] { text-align: right; }
+  .row .unit { font-size: 11px; color: var(--muted); width: 46px; }
+
+  /* Washability table */
+  .table-scroll { overflow-x: auto; }
+  table.wash { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 4px; min-width: 760px; }
+  table.wash th {
+    font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.4px;
+    font-weight: 600; text-align: right; padding: 4px 6px; border-bottom: 1px solid var(--border); white-space: nowrap;
+  }
+  table.wash th.first { text-align: left; }
+  table.wash th.calc { color: var(--calc); }
+  table.wash td { padding: 2px 4px; border-bottom: 1px solid var(--row-alt); }
+  table.wash td.dens { white-space: nowrap; color: var(--muted); font-size: 12px; text-align: left; }
+  table.wash input { width: 100%; padding: 3px 5px; border: 1px solid var(--border); border-radius: 4px; font-size: 13px; text-align: right; }
+  table.wash input.dens-b { width: 58px; display: inline-block; }
+  td.calc-cell { text-align: right; color: var(--calc); font-variant-numeric: tabular-nums; background: #faf8ff; font-size: 12px; }
+  td.rd-cell { text-align: right; color: var(--muted); font-size: 12px; }
+  td.ngm-hi { color: var(--bad); font-weight: 600; }
+  table.wash td.del { width: 26px; text-align: center; }
+  table.wash button.del { background: none; border: 1px solid var(--border); border-radius: 4px; color: var(--muted); cursor: pointer; padding: 1px 6px; }
+  table.wash tfoot td { padding-top: 6px; font-weight: 600; }
+  .sum-ok { color: var(--ok); } .sum-bad { color: var(--bad); }
+  .add-row-btn { margin-top: 6px; background: none; border: 1px dashed var(--border); border-radius: 4px; padding: 4px 8px; cursor: pointer; color: var(--muted); font-size: 12px; }
+  .add-row-btn:hover { background: var(--row-alt); color: var(--text); }
+
+  /* Computed panel */
+  .computed-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 18px; }
+  .metric { padding: 8px 10px; background: var(--row-alt); border-radius: 6px; border: 1px solid var(--border); }
+  .metric .k { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+  .metric .v { font-size: 22px; font-weight: 600; margin-top: 2px; }
+  .metric .v small { font-size: 12px; color: var(--muted); font-weight: 400; }
+  .metric.ngm .v { color: var(--accent); }
+  .metric.ngm.hard .v { color: var(--bad); }
+  .cut-row { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
+  .cut-row label { font-size: 13px; }
+  .cut-row input { width: 80px; padding: 5px 7px; border: 1px solid var(--border); border-radius: 4px; text-align: right; font-size: 14px; }
+  svg.curve { width: 100%; height: 210px; background: var(--row-alt); border: 1px solid var(--border); border-radius: 6px; margin-top: 8px; }
+  svg.curve text { font-size: 9px; fill: var(--muted); }
+  .note { font-size: 11px; color: var(--muted); margin-top: 8px; font-style: italic; }
+  .callout { margin-top: 10px; padding: 8px 10px; border-left: 3px solid var(--accent); background: #ddf4ff55; border-radius: 0 4px 4px 0; font-size: 12px; }
+  footer.app-footer { margin-top: 16px; background: var(--card-bg); border: 1px solid var(--border); border-radius: 8px; padding: 12px 16px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  button.primary { background: var(--accent); color: white; border: 0; border-radius: 6px; padding: 8px 16px; font-size: 14px; font-weight: 500; cursor: pointer; }
+  button.primary:hover { background: var(--accent-hover); }
+  button.ghost { background: white; color: var(--text); border: 1px solid var(--border); border-radius: 6px; padding: 8px 14px; font-size: 13px; cursor: pointer; }
+  button.ghost:hover { background: var(--row-alt); }
+  .status { margin-left: auto; font-size: 12px; color: var(--muted); }
+  .status.ok { color: var(--ok); } .status.warn { color: var(--warn); }
+  .saved-seams { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 4px; }
+  .seam-chip { font-size: 12px; background: #eaeef2; border: 1px solid var(--border); border-radius: 12px; padding: 3px 10px; cursor: pointer; }
+  .seam-chip:hover { background: #ddf4ff; border-color: var(--accent); }
+  details { margin-top: 12px; } details summary { cursor: pointer; font-size: 12px; color: var(--accent); }
+  pre.preview { background: #f6f8fa; border: 1px solid var(--border); border-radius: 4px; padding: 10px; font-size: 11px; overflow: auto; max-height: 300px; margin-top: 6px; }
+</style>
+</head>
+<body>
+
+<header class="app-header">
+  <div>
+    <h1>Washability Reference Input</h1>
+    <div class="sub">Reference Plant A · +0.5мм коарс композит · Seam reference (ээлж тутмын биш)</div>
+  </div>
+  <div class="meta">
+    <label>Seam код <input type="text" id="seam-code" placeholder="ж: 4AU" style="width:100px;"></label>
+    <label>Дээж авсан <input type="date" id="sample-date"></label>
+  </div>
+</header>
+
+<div class="grid">
+
+  <!-- =========== CARD 1: RAW COAL QUALITY HEADER =========== -->
+  <section class="card" data-section="meta">
+    <h2>Түүхий нүүрсний чанар (seam) <span class="badge ref">reference</span></h2>
+
+    <div class="row">
+      <label>Sample ID / тайлбар</label>
+      <input type="text" id="m-sampleid" placeholder="PR8_B35_4AU_01-08" style="width:160px;">
+      <span class="unit"></span>
+    </div>
+    <div class="row">
+      <label>Уурхай / блок</label>
+      <input type="text" id="m-block" placeholder="ж: B35, In-Pit" style="width:160px;">
+      <span class="unit"></span>
+    </div>
+    <div class="row">
+      <label>Туршсан ширхэглэл <span class="hint">(+0.5мм коарс)</span></label>
+      <input type="text" id="m-size" placeholder="ж: -50+0.5мм" style="width:160px;">
+      <span class="unit"></span>
+    </div>
+
+    <div class="qgrid" style="margin-top:8px; padding-top:8px; border-top:1px dashed var(--border);">
+      <div class="row"><label>Total moisture (TM)</label><input type="number" step="0.1" id="m-tm" placeholder="—"><span class="unit">%</span></div>
+      <div class="row"><label>Inherent moist. (IM)</label><input type="number" step="0.01" id="m-im" placeholder="0.84"><span class="unit">%</span></div>
+      <div class="row"><label>Ash, ad</label><input type="number" step="0.1" id="m-ash" placeholder="25.5"><span class="unit">%</span></div>
+      <div class="row"><label>Vol, ad</label><input type="number" step="0.1" id="m-vol" placeholder="21.9"><span class="unit">%</span></div>
+      <div class="row"><label>Sulphur, ad</label><input type="number" step="0.01" id="m-s" placeholder="0.96"><span class="unit">%</span></div>
+      <div class="row"><label>CSN</label><input type="number" step="0.5" id="m-csn" placeholder="2.5"><span class="unit"></span></div>
+      <div class="row"><label>TRD</label><input type="number" step="0.01" id="m-trd" placeholder="1.55"><span class="unit">g/cm³</span></div>
+      <div class="row"><label>Лаб</label><input type="text" id="m-lab" placeholder="Нэр..." style="width:96px;"><span class="unit"></span></div>
+    </div>
+
+    <div class="callout">
+      Энэ форм нь <b>ээлж тутмын оператор оруулга биш.</b> Washability нь уурхайн эхэнд seam тутамд нэг
+      удаа хийгддэг. Доорх хүснэгт нь <b>+0.5мм коарс композит</b> (DMC-д орох хэсэг). −0.5мм нарийн фракц нь
+      нягтын cut-д ордоггүй — флотацид ордог, Phase-1 DMC scope-оос гадуур. Хадгалсан утга нь config (Doc 03 §12)
+      болж операторын формын NDM-ийг автоматаар тооцоход ашиглагдана.
+    </div>
+  </section>
+
+  <!-- =========== CARD 2: COMPUTED OUTPUT =========== -->
+  <section class="card" data-section="computed">
+    <h2>Тооцоолсон үзүүлэлт <span class="badge calc">auto</span></h2>
+
+    <div class="cut-row">
+      <label>Cut density</label>
+      <input type="number" step="0.01" id="cut-density" value="1.50">
+      <span class="unit" style="font-size:11px;color:var(--muted);">g/cm³</span>
+      <label style="margin-left:8px;">NGM цонх ±</label>
+      <input type="number" step="0.01" id="ngm-window" value="0.10">
+      <span class="unit" style="font-size:11px;color:var(--muted);">g/cm³</span>
+    </div>
+
+    <div class="computed-grid">
+      <div class="metric">
+        <div class="k">Теорийн yield</div>
+        <div class="v"><span id="o-yield">—</span><small> %</small></div>
+      </div>
+      <div class="metric">
+        <div class="k">Баяжмалын ash</div>
+        <div class="v"><span id="o-clean-ash">—</span><small> %</small></div>
+      </div>
+      <div class="metric ngm" id="ngm-metric">
+        <div class="k">NGM / NDM (±<span id="o-window">0.10</span>)</div>
+        <div class="v"><span id="o-ngm">—</span><small> %</small></div>
+      </div>
+      <div class="metric">
+        <div class="k">Хаягдлын ash</div>
+        <div class="v"><span id="o-reject-ash">—</span><small> %</small></div>
+      </div>
+    </div>
+
+    <div id="ngm-verdict" class="note"></div>
+
+    <svg class="curve" id="curve" viewBox="0 0 320 210" preserveAspectRatio="none"></svg>
+    <div class="note">Хар муруй: cumulative float yield (x) ↔ баяжмалын ash (y). Улаан тасархай: cut density.</div>
+  </section>
+
+  <!-- =========== CARD 3: WASHABILITY TABLE =========== -->
+  <section class="card full" data-section="table">
+    <h2>Sink-float (washability) хүснэгт — коарс композит <span class="badge ref">оруулга: Mass, Ash</span> <span class="badge calc">тооцоо: Cum, NGM</span></h2>
+
+    <div class="table-scroll">
+    <table class="wash">
+      <thead>
+        <tr>
+          <th class="first">Нягтын завсар (g/cm³)</th>
+          <th>RD</th>
+          <th>Жин (mass %)</th>
+          <th>Ash %</th>
+          <th class="calc">Cum float yield %</th>
+          <th class="calc">Cum float ash %</th>
+          <th class="calc">NGM (±w) %</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="wash-body"></tbody>
+      <tfoot>
+        <tr>
+          <td class="dens" style="font-weight:600;">Нийт</td>
+          <td></td>
+          <td style="text-align:right;"><span id="sum-mass">0</span> %</td>
+          <td style="text-align:right;color:var(--muted);"><span id="wtd-ash">—</span></td>
+          <td colspan="4"></td>
+        </tr>
+      </tfoot>
+    </table>
+    </div>
+    <button type="button" class="add-row-btn" onclick="addRow()">+ Фракц нэмэх</button>
+    <p class="note">Оруулах: нягтын завсар, Жин %, Ash %. RD = фракцын float нягт (дээд хязгаар). Cum float ба NGM баганыг автоматаар тооцоолно. Жин нийлбэр ≈ 100%, нягтууд залгаа байх.</p>
+  </section>
+
+</div>
+
+<footer class="app-footer">
+  <button type="button" class="primary" onclick="saveSeam()">Seam хадгалах (localStorage)</button>
+  <button type="button" class="ghost" onclick="loadExample()">4AU жишээ ачаалах</button>
+  <button type="button" class="ghost" onclick="clearForm()">Цэвэрлэх</button>
+  <span class="status" id="status">Бэлэн — seam код оруулаад хүснэгтээ бөглөнө үү.</span>
+  <div style="flex-basis:100%;">
+    <div style="font-size:11px;color:var(--muted);margin-top:4px;">Хадгалсан seam-ууд:</div>
+    <div class="saved-seams" id="saved-seams"><span style="font-size:12px;color:var(--muted);">—</span></div>
+  </div>
+</footer>
+
+<details>
+  <summary>Хадгалсан JSON-ыг харах (debug)</summary>
+  <pre class="preview" id="json-preview">—</pre>
+</details>
+
+<script>
+// ============================================================
+// Washability Reference Input — Phase 1 Mock (v2, LIMN-aligned)
+// +0.5мм коарс композит: density × {mass, ash} → NGM/NDM, yield-ash муруй.
+// Нягтын алхам LIMN-ийн жинхэнэ багц (cut орчим нарийн).
+// NGM = standard near-gravity material (cut ± w), Doc 02 §5.3. w тохируулдаг.
+// Backend-гүй: localStorage (seam код тус бүрээр).
+// ============================================================
+
+const STORAGE_KEY = 'hms_washability_v2';
+
+// LIMN-ийн жинхэнэ нягтын фракцууд (4AU тайлангаас): cut орчим 0.025, захдаа бүдүүн.
+const DEFAULT_FRACTIONS = [
+  { lo: 0,    hi: 1.30 },  // Float 1.30
+  { lo: 1.30, hi: 1.325 },
+  { lo: 1.325,hi: 1.35 },
+  { lo: 1.35, hi: 1.375 },
+  { lo: 1.375,hi: 1.40 },
+  { lo: 1.40, hi: 1.425 },
+  { lo: 1.425,hi: 1.45 },
+  { lo: 1.45, hi: 1.50 },
+  { lo: 1.50, hi: 1.60 },
+  { lo: 1.60, hi: 1.70 },
+  { lo: 1.70, hi: 1.80 },
+  { lo: 1.80, hi: 2.00 },
+  { lo: 2.00, hi: 2.20 },
+  { lo: 2.20, hi: 99 },    // Sink 2.20
+];
+
+const NOMINAL_LO = 1.15, NOMINAL_HI = 2.50;  // open-end clamps for apportioning
+
+document.getElementById('sample-date').valueAsDate = new Date();
+
+function makeRow(lo, hi, mass, ash) {
+  const tr = document.createElement('tr');
+  const openLo = (lo === '' || lo <= 0);
+  const openHi = (hi === '' || hi >= 99);
+  tr.innerHTML =
+    '<td class="dens">' +
+      '<input class="dens-b" type="number" step="0.005" value="' + (openLo ? '' : lo) + '" ' + (openLo ? 'placeholder="0"' : '') + ' data-lo>' +
+      ' <span style="color:var(--muted);">–</span> ' +
+      '<input class="dens-b" type="number" step="0.005" value="' + (openHi ? '' : hi) + '" ' + (openHi ? 'placeholder="∞"' : '') + ' data-hi>' +
+    '</td>' +
+    '<td class="rd-cell" data-rd>—</td>' +
+    '<td><input type="number" step="0.01" placeholder="0.0" value="' + (mass ?? '') + '" data-mass></td>' +
+    '<td><input type="number" step="0.1" placeholder="0.0" value="' + (ash ?? '') + '" data-ash></td>' +
+    '<td class="calc-cell" data-cumy>—</td>' +
+    '<td class="calc-cell" data-cuma>—</td>' +
+    '<td class="calc-cell" data-ngm>—</td>' +
+    '<td class="del"><button type="button" class="del" onclick="delRow(this)">×</button></td>';
+  tr.querySelectorAll('input').forEach(i => i.addEventListener('input', recompute));
+  return tr;
+}
+
+function addRow(lo, hi, mass, ash) {
+  document.getElementById('wash-body').appendChild(makeRow(lo ?? '', hi ?? '', mass, ash));
+  recompute();
+}
+function delRow(btn) {
+  const body = document.getElementById('wash-body');
+  if (body.children.length > 1) btn.closest('tr').remove();
+  else btn.closest('tr').querySelectorAll('input').forEach(i => i.value = '');
+  recompute();
+}
+function buildDefaultTable() {
+  const body = document.getElementById('wash-body');
+  body.innerHTML = '';
+  DEFAULT_FRACTIONS.forEach(f => body.appendChild(makeRow(f.lo, f.hi, '', '')));
+}
+
+function readFractions() {
+  const rows = [];
+  document.querySelectorAll('#wash-body tr').forEach(tr => {
+    const loRaw = tr.querySelector('[data-lo]').value;
+    const hiRaw = tr.querySelector('[data-hi]').value;
+    const massRaw = tr.querySelector('[data-mass]').value;
+    const ashRaw = tr.querySelector('[data-ash]').value;
+    rows.push({
+      tr,
+      lo: loRaw === '' ? 0  : parseFloat(loRaw),
+      hi: hiRaw === '' ? 99 : parseFloat(hiRaw),
+      mass: massRaw === '' ? null : parseFloat(massRaw),
+      ash: ashRaw === '' ? null : parseFloat(ashRaw),
+    });
+  });
+  return rows;
+}
+
+function eff(f) { return { lo: f.lo <= 0 ? NOMINAL_LO : f.lo, hi: f.hi >= 99 ? NOMINAL_HI : f.hi }; }
+function fractionBelow(f, d) {
+  const e = eff(f);
+  if (d >= e.hi) return 1;
+  if (d <= e.lo) return 0;
+  return (d - e.lo) / (e.hi - e.lo);
+}
+function massWithin(f, a, b) {
+  if (f.mass == null) return 0;
+  const e = eff(f);
+  const lo = Math.max(a, e.lo), hi = Math.min(b, e.hi);
+  if (hi <= lo) return 0;
+  return f.mass * (hi - lo) / (e.hi - e.lo);
+}
+
+function recompute() {
+  const fr = readFractions();
+  const cut = parseFloat(document.getElementById('cut-density').value) || 1.50;
+  const w = parseFloat(document.getElementById('ngm-window').value) || 0.10;
+  document.getElementById('o-window').textContent = w.toFixed(2);
+
+  let totMass = 0, totAshNum = 0, wtdAshDen = 0, wtdAshNum = 0;
+  fr.forEach(f => {
+    if (f.mass != null) {
+      totMass += f.mass;
+      if (f.ash != null) { totAshNum += f.mass * f.ash; wtdAshNum += f.mass * f.ash; wtdAshDen += f.mass; }
+    }
+  });
+
+  // Sum / weighted ash footer
+  const sumEl = document.getElementById('sum-mass');
+  sumEl.textContent = totMass.toFixed(1);
+  sumEl.parentElement.className = (Math.abs(totMass - 100) <= 1.5 ? 'sum-ok' : 'sum-bad');
+  document.getElementById('wtd-ash').textContent = wtdAshDen ? (wtdAshNum / wtdAshDen).toFixed(1) + ' % (жигнэсэн)' : '—';
+
+  // Per-row cumulative float (top = lightest) + NGM at row RD
+  let cumMass = 0, cumAshNum = 0;
+  fr.forEach(f => {
+    const rdCell = f.tr.querySelector('[data-rd]');
+    const cumyCell = f.tr.querySelector('[data-cumy]');
+    const cumaCell = f.tr.querySelector('[data-cuma]');
+    const ngmCell = f.tr.querySelector('[data-ngm]');
+    const rd = f.hi >= 99 ? null : f.hi;
+    rdCell.textContent = rd == null ? 'sink' : rd.toFixed(3).replace(/0+$/,'').replace(/\.$/,'');
+    if (f.mass == null || !totMass) { cumyCell.textContent = '—'; cumaCell.textContent = '—'; ngmCell.textContent = '—'; ngmCell.classList.remove('ngm-hi'); return; }
+    cumMass += f.mass;
+    if (f.ash != null) cumAshNum += f.mass * f.ash;
+    cumyCell.textContent = (cumMass / totMass * 100).toFixed(1);
+    cumaCell.textContent = cumMass ? (cumAshNum / cumMass).toFixed(1) : '—';
+    // NGM at this fraction's float density rd (± w)
+    const rdc = rd == null ? eff(f).hi : rd;
+    let ngmMass = 0;
+    fr.forEach(g => { ngmMass += massWithin(g, rdc - w, rdc + w); });
+    const ngm = ngmMass / totMass * 100;
+    ngmCell.textContent = ngm.toFixed(1);
+    ngmCell.classList.toggle('ngm-hi', ngm > 25);
+  });
+
+  // Headline metrics at user cut
+  let cleanMass = 0, cleanAshNum = 0;
+  fr.forEach(f => {
+    if (f.mass == null) return;
+    const below = fractionBelow(f, cut);
+    cleanMass += f.mass * below;
+    if (f.ash != null) cleanAshNum += f.mass * below * f.ash;
+  });
+  const rejectMass = totMass - cleanMass;
+  const rejectAshNum = totAshNum - cleanAshNum;
+  const yieldPct = totMass ? (cleanMass / totMass) * 100 : 0;
+  const cleanAsh = cleanMass ? (cleanAshNum / cleanMass) : null;
+  const rejectAsh = rejectMass > 0.001 ? (rejectAshNum / rejectMass) : null;
+
+  let ngmMass = 0;
+  fr.forEach(f => { ngmMass += massWithin(f, cut - w, cut + w); });
+  const ngmCut = totMass ? (ngmMass / totMass) * 100 : 0;
+
+  document.getElementById('o-yield').textContent = totMass ? yieldPct.toFixed(1) : '—';
+  document.getElementById('o-clean-ash').textContent = cleanAsh != null ? cleanAsh.toFixed(1) : '—';
+  document.getElementById('o-reject-ash').textContent = rejectAsh != null ? rejectAsh.toFixed(1) : '—';
+  document.getElementById('o-ngm').textContent = totMass ? ngmCut.toFixed(1) : '—';
+
+  const metric = document.getElementById('ngm-metric');
+  const verdict = document.getElementById('ngm-verdict');
+  metric.classList.remove('hard');
+  if (!totMass) verdict.textContent = '';
+  else if (ngmCut > 25) { metric.classList.add('hard'); verdict.textContent = 'NGM > 25% — ялгалт хүндрэлтэй. Ep сайн (≤0.05) байх шаардлагатай, элэгдсэн spigot/vortex-д онцгой мэдрэг (Doc 02 §5.3).'; }
+  else if (ngmCut < 10) verdict.textContent = 'NGM < 10% — ялгалт амар. Ep-ийн хатуу шаардлага бага.';
+  else verdict.textContent = 'NGM ' + ngmCut.toFixed(1) + '% — энгийн ажиллагааны хүрээ (10–25%).';
+
+  drawCurve(fr, cut, totMass);
+  refreshPreview();
+}
+
+function drawCurve(fr, cut, totMass) {
+  const svg = document.getElementById('curve');
+  svg.innerHTML = '';
+  if (!totMass) return;
+  const ns = 'http://www.w3.org/2000/svg';
+  const W = 320, H = 210, padL = 30, padR = 8, padT = 10, padB = 22;
+  const dMin = 1.20, dMax = 2.20, steps = 50;
+  const pts = []; let maxAsh = 1;
+  for (let i = 0; i <= steps; i++) {
+    const d = dMin + (dMax - dMin) * i / steps;
+    let cm = 0, can = 0, tm = 0;
+    fr.forEach(f => {
+      if (f.mass == null) return;
+      tm += f.mass;
+      const b = fractionBelow(f, d); cm += f.mass * b;
+      if (f.ash != null) can += f.mass * b * f.ash;
+    });
+    const y = tm ? (cm / tm) * 100 : 0;
+    const a = cm ? (can / cm) : 0;
+    pts.push({ yield: y, ash: a });
+    if (a > maxAsh) maxAsh = a;
+  }
+  maxAsh = Math.ceil(maxAsh / 5) * 5;
+  const sx = v => padL + (v / 100) * (W - padL - padR);
+  const sy = v => padT + (1 - v / maxAsh) * (H - padT - padB);
+  const axis = (x1,y1,x2,y2) => { const l = document.createElementNS(ns,'line'); l.setAttribute('x1',x1); l.setAttribute('y1',y1); l.setAttribute('x2',x2); l.setAttribute('y2',y2); l.setAttribute('stroke','#d0d7de'); svg.appendChild(l); };
+  axis(padL, padT, padL, H-padB); axis(padL, H-padB, W-padR, H-padB);
+  [0, maxAsh/2, maxAsh].forEach(v => { const t = document.createElementNS(ns,'text'); t.setAttribute('x', padL-3); t.setAttribute('y', sy(v)+3); t.setAttribute('text-anchor','end'); t.textContent = v.toFixed(0); svg.appendChild(t); });
+  [0,50,100].forEach(v => { const t = document.createElementNS(ns,'text'); t.setAttribute('x', sx(v)); t.setAttribute('y', H-padB+12); t.setAttribute('text-anchor','middle'); t.textContent = v; svg.appendChild(t); });
+  const xlab = document.createElementNS(ns,'text'); xlab.setAttribute('x', (padL+W-padR)/2); xlab.setAttribute('y', H-2); xlab.setAttribute('text-anchor','middle'); xlab.textContent = 'Cumulative yield %'; svg.appendChild(xlab);
+  const poly = document.createElementNS(ns,'polyline'); poly.setAttribute('fill','none'); poly.setAttribute('stroke','#1f2328'); poly.setAttribute('stroke-width','1.5'); poly.setAttribute('points', pts.map(p => sx(p.yield)+','+sy(p.ash)).join(' ')); svg.appendChild(poly);
+  let cutYield = 0, ctm = 0;
+  fr.forEach(f => { if (f.mass==null) return; ctm += f.mass; cutYield += f.mass * fractionBelow(f, cut); });
+  cutYield = ctm ? (cutYield/ctm)*100 : 0;
+  const cl = document.createElementNS(ns,'line'); cl.setAttribute('x1', sx(cutYield)); cl.setAttribute('y1', padT); cl.setAttribute('x2', sx(cutYield)); cl.setAttribute('y2', H-padB); cl.setAttribute('stroke','#cf222e'); cl.setAttribute('stroke-dasharray','4 3'); cl.setAttribute('stroke-width','1'); svg.appendChild(cl);
+  const ct = document.createElementNS(ns,'text'); ct.setAttribute('x', Math.min(sx(cutYield)+3, W-46)); ct.setAttribute('y', padT+9); ct.setAttribute('fill','#cf222e'); ct.textContent = 'cut ' + cut.toFixed(2); svg.appendChild(ct);
+}
+
+function numOrNull(id) { const v = document.getElementById(id).value; return v === '' ? null : parseFloat(v); }
+function txt(id) { return document.getElementById(id).value.trim(); }
+
+function collectSeam() {
+  return {
+    schema_version: 2,
+    saved_at: new Date().toISOString(),
+    seam_code: txt('seam-code'),
+    sample_date: document.getElementById('sample-date').value,
+    sample_id: txt('m-sampleid'),
+    block: txt('m-block'),
+    size_range: txt('m-size'),
+    raw_quality: { tm_pct: numOrNull('m-tm'), im_pct: numOrNull('m-im'), ash_ad_pct: numOrNull('m-ash'), vol_ad_pct: numOrNull('m-vol'), sulphur_ad_pct: numOrNull('m-s'), csn: numOrNull('m-csn'), trd: numOrNull('m-trd') },
+    lab: txt('m-lab'),
+    cut_density_target: parseFloat(document.getElementById('cut-density').value) || null,
+    ngm_window: parseFloat(document.getElementById('ngm-window').value) || 0.10,
+    fractions: readFractions().map(f => ({ density_lo: f.lo <= 0 ? null : f.lo, density_hi: f.hi >= 99 ? null : f.hi, mass_pct: f.mass, ash_pct: f.ash })),
+  };
+}
+
+function readStore() { try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}; } catch { return {}; } }
+
+function saveSeam() {
+  const seam = collectSeam();
+  if (!seam.seam_code) { setStatus('Seam код оруулна уу.', 'warn'); document.getElementById('seam-code').focus(); return; }
+  const sumMass = seam.fractions.reduce((s,f) => s + (f.mass_pct || 0), 0);
+  if (Math.abs(sumMass - 100) > 5) { setStatus('Жин нийлбэр ' + sumMass.toFixed(1) + '% — 100%-аас хол. Шалгана уу.', 'warn'); return; }
+  const store = readStore();
+  store[seam.seam_code] = seam;
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(store)); } catch (e) { console.warn('save failed', e); }
+  console.log('=== Washability seam saved ===', seam);
+  setStatus('✓ ' + seam.seam_code + ' хадгаллаа · ' + seam.fractions.length + ' фракц · localStorage', 'ok');
+  renderSavedSeams(); refreshPreview();
+}
+
+function loadSeam(code) {
+  const s = readStore()[code]; if (!s) return;
+  document.getElementById('seam-code').value = s.seam_code || '';
+  if (s.sample_date) document.getElementById('sample-date').value = s.sample_date;
+  document.getElementById('m-sampleid').value = s.sample_id || '';
+  document.getElementById('m-block').value = s.block || '';
+  document.getElementById('m-size').value = s.size_range || '';
+  const q = s.raw_quality || {};
+  document.getElementById('m-tm').value = q.tm_pct ?? '';
+  document.getElementById('m-im').value = q.im_pct ?? '';
+  document.getElementById('m-ash').value = q.ash_ad_pct ?? '';
+  document.getElementById('m-vol').value = q.vol_ad_pct ?? '';
+  document.getElementById('m-s').value = q.sulphur_ad_pct ?? '';
+  document.getElementById('m-csn').value = q.csn ?? '';
+  document.getElementById('m-trd').value = q.trd ?? '';
+  document.getElementById('m-lab').value = s.lab || '';
+  if (s.cut_density_target) document.getElementById('cut-density').value = s.cut_density_target;
+  if (s.ngm_window) document.getElementById('ngm-window').value = s.ngm_window;
+  const body = document.getElementById('wash-body'); body.innerHTML = '';
+  (s.fractions || []).forEach(f => body.appendChild(makeRow(f.density_lo == null ? 0 : f.density_lo, f.density_hi == null ? 99 : f.density_hi, f.mass_pct, f.ash_pct)));
+  if (body.children.length === 0) buildDefaultTable();
+  recompute(); setStatus('Ачааллаа: ' + code, 'ok');
+}
+
+function renderSavedSeams() {
+  const store = readStore(); const wrap = document.getElementById('saved-seams'); const codes = Object.keys(store);
+  if (!codes.length) { wrap.innerHTML = '<span style="font-size:12px;color:var(--muted);">—</span>'; return; }
+  wrap.innerHTML = '';
+  codes.forEach(c => { const chip = document.createElement('span'); chip.className = 'seam-chip'; chip.textContent = c; chip.title = 'Дарж ачаална'; chip.onclick = () => loadSeam(c); wrap.appendChild(chip); });
+}
+
+function refreshPreview() { document.getElementById('json-preview').textContent = JSON.stringify(collectSeam(), null, 2); }
+
+function loadExample() {
+  // Бодит 4AU −8+2мм блок (LIMN Float sink sheet) — коарс композитын төлөөлөл
+  document.getElementById('seam-code').value = '4AU';
+  document.getElementById('m-sampleid').value = 'PR8_B35_4AU_01-08';
+  document.getElementById('m-block').value = 'B35, In-Pit';
+  document.getElementById('m-size').value = '-8+2мм (блок жишээ)';
+  document.getElementById('m-tm').value = '';
+  document.getElementById('m-im').value = '0.84';
+  document.getElementById('m-ash').value = '25.5';
+  document.getElementById('m-vol').value = '21.9';
+  document.getElementById('m-s').value = '0.96';
+  document.getElementById('m-csn').value = '2.5';
+  document.getElementById('m-trd').value = '1.55';
+  document.getElementById('m-lab').value = 'CHPP Lab';
+  document.getElementById('cut-density').value = '1.50';
+  document.getElementById('ngm-window').value = '0.10';
+  const ex = [
+    [0,1.30, 14.20, 5.95], [1.30,1.325, 4.55, 8.24], [1.325,1.35, 8.24, 12.32], [1.35,1.375, 9.42, 14.24],
+    [1.375,1.40, 10.98, 16.47], [1.40,1.425, 11.36, 20.16], [1.425,1.45, 10.10, 22.51], [1.45,1.50, 9.82, 27.34],
+    [1.50,1.60, 6.92, 34.87], [1.60,1.70, 1.36, 42.16], [1.70,1.80, 2.23, 58.25], [1.80,2.00, 2.67, 62.63],
+    [2.00,2.20, 2.96, 74.03], [2.20,99, 5.18, 82.67],
+  ];
+  const body = document.getElementById('wash-body'); body.innerHTML = '';
+  ex.forEach(r => body.appendChild(makeRow(r[0], r[1], r[2], r[3])));
+  recompute(); setStatus('4AU −8+2мм бодит блок ачаалагдлаа (LIMN тайлан).', 'ok');
+}
+
+function clearForm() {
+  if (!confirm('Формыг цэвэрлэх үү? (Хадгалсан seam-ууд устахгүй)')) return;
+  ['seam-code','m-sampleid','m-block','m-size','m-tm','m-im','m-ash','m-vol','m-s','m-csn','m-trd','m-lab'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('cut-density').value = '1.50';
+  document.getElementById('ngm-window').value = '0.10';
+  buildDefaultTable(); recompute(); setStatus('Цэвэрлэлээ.', '');
+}
+
+function setStatus(msg, kind) { const el = document.getElementById('status'); el.textContent = msg; el.className = 'status' + (kind ? ' ' + kind : ''); }
+
+// --- init ---
+buildDefaultTable();
+document.getElementById('cut-density').addEventListener('input', recompute);
+document.getElementById('ngm-window').addEventListener('input', recompute);
+renderSavedSeams();
+recompute();
+</script>
+
+</body>
+</html>

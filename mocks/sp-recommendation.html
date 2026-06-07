@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="mn">
+<head>
+<meta charset="UTF-8">
+<title>SP Recommendation Engine (demo) — Reference Plant A</title>
+<style>
+  :root {
+    --bg:#f4f6f8; --card-bg:#fff; --border:#d0d7de; --text:#1f2328; --muted:#57606a;
+    --accent:#0969da; --accent-hover:#0860c7; --warn:#bf8700; --ok:#1a7f37; --bad:#cf222e;
+    --row-alt:#f6f8fa; --calc:#6639ba; --nominal:#1f2328; --corrected:#6639ba;
+  }
+  * { box-sizing:border-box; }
+  body { font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; background:var(--bg); color:var(--text); margin:0; padding:16px; font-size:14px; }
+  header.app-header { background:var(--card-bg); border:1px solid var(--border); border-radius:8px; padding:14px 18px; margin-bottom:16px; }
+  header.app-header h1 { margin:0; font-size:18px; font-weight:600; }
+  header.app-header .sub { color:var(--muted); font-size:12px; margin-top:2px; }
+  .grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  @media (max-width:1000px){ .grid { grid-template-columns:1fr; } }
+  .card { background:var(--card-bg); border:1px solid var(--border); border-radius:8px; padding:14px 16px; }
+  .card.full { grid-column:1 / -1; }
+  .card h2 { margin:0 0 10px; font-size:14px; font-weight:600; display:flex; align-items:center; gap:8px; padding-bottom:8px; border-bottom:1px solid var(--border); }
+  .badge { font-size:10px; background:#ddf4ff; color:var(--accent); padding:2px 6px; border-radius:10px; font-weight:500; }
+  .badge.ref { background:#fff8c5; color:var(--warn); } .badge.calc { background:#efe7fb; color:var(--calc); }
+  .row { display:grid; grid-template-columns:1fr auto auto; align-items:center; gap:8px; padding:4px 0; }
+  .row label { font-size:13px; } .row .hint { font-size:11px; color:var(--muted); }
+  .row input[type=number], .row select { width:110px; padding:4px 6px; border:1px solid var(--border); border-radius:4px; font-size:13px; }
+  .row input[type=number] { text-align:right; } .row .unit { font-size:11px; color:var(--muted); width:46px; }
+  .blend-row { display:grid; grid-template-columns:1fr 90px 30px; gap:8px; align-items:center; padding:3px 0; }
+  .blend-row select { width:100%; padding:4px 6px; border:1px solid var(--border); border-radius:4px; font-size:13px; }
+  .blend-row input { width:100%; padding:4px 6px; border:1px solid var(--border); border-radius:4px; font-size:13px; text-align:right; }
+  .blend-row button { background:none; border:1px solid var(--border); border-radius:4px; color:var(--muted); cursor:pointer; padding:2px 4px; }
+  .add-btn { margin-top:6px; background:none; border:1px dashed var(--border); border-radius:4px; padding:4px 8px; cursor:pointer; color:var(--muted); font-size:12px; }
+  .add-btn:hover { background:var(--row-alt); color:var(--text); }
+  .metric { padding:8px 10px; background:var(--row-alt); border-radius:6px; border:1px solid var(--border); }
+  .metric .k { font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.5px; }
+  .metric .v { font-size:20px; font-weight:600; margin-top:2px; } .metric .v small { font-size:12px; color:var(--muted); font-weight:400; }
+  .mgrid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .delta-up { color:var(--bad); } .delta-down { color:var(--ok); }
+  svg.curve { width:100%; height:230px; background:var(--row-alt); border:1px solid var(--border); border-radius:6px; margin-top:8px; }
+  svg.curve text { font-size:9px; fill:var(--muted); }
+  .legend { font-size:11px; color:var(--muted); margin-top:4px; }
+  .legend .sw { display:inline-block; width:18px; height:2px; vertical-align:middle; margin-right:3px; }
+  .note { font-size:11px; color:var(--muted); margin-top:8px; font-style:italic; }
+  .callout { margin-top:10px; padding:8px 10px; border-left:3px solid var(--accent); background:#ddf4ff55; border-radius:0 4px 4px 0; font-size:12px; }
+  .reco-box { margin-top:8px; padding:12px 14px; border:1px solid var(--accent); border-radius:8px; background:#f4f9ff; }
+  .reco-big { font-size:26px; font-weight:700; color:var(--accent); }
+  .reco-arrow { font-size:22px; }
+  .warn-box { margin-top:8px; padding:8px 10px; border-left:3px solid var(--bad); background:#fff0f0; border-radius:0 4px 4px 0; font-size:12px; color:var(--bad); }
+  table.mini { width:100%; border-collapse:collapse; font-size:12px; margin-top:6px; }
+  table.mini th, table.mini td { padding:3px 6px; text-align:right; border-bottom:1px solid var(--row-alt); }
+  table.mini th { color:var(--muted); font-weight:600; font-size:11px; text-transform:uppercase; }
+  table.mini th.first, table.mini td.first { text-align:left; }
+  details { margin-top:12px; } details summary { cursor:pointer; font-size:12px; color:var(--accent); }
+  pre.preview { background:#f6f8fa; border:1px solid var(--border); border-radius:4px; padding:10px; font-size:11px; overflow:auto; max-height:280px; margin-top:6px; }
+</style>
+</head>
+<body>
+
+<header class="app-header">
+  <h1>SP Recommendation Engine <span class="badge calc">demo</span></h1>
+  <div class="sub">Reference Plant A · blend washability → 2ц үнсээр ash-pinning залруулга → cut density / media SP зөвлөмж · Phase 1 shadow (зөвхөн зөвлөмж)</div>
+</header>
+
+<div class="grid">
+
+  <!-- CARD 1: BLEND -->
+  <section class="card" data-s="blend">
+    <h2>1. Идэвхтэй blend <span class="badge ref">оператор</span></h2>
+    <div id="blend-list"></div>
+    <button type="button" class="add-btn" onclick="addBlendRow()">+ Seam нэмэх</button>
+    <div class="row" style="margin-top:6px;">
+      <label>Харьцааны нийлбэр</label>
+      <span id="blend-sum" style="font-weight:600;">—</span>
+      <span class="unit">%</span>
+    </div>
+    <p class="note">Seam-ийн washability нь washability-input.html-д хадгалагдсан config. Энд зөвхөн ямар blend явж байгааг заана.</p>
+  </section>
+
+  <!-- CARD 2: TARGET & MEASURED -->
+  <section class="card" data-s="target">
+    <h2>2. Зорилт ба хэмжилт <span class="badge ref">оператор</span></h2>
+    <div class="row">
+      <label>Зорилтот баяжмалын ash <span class="hint">(коксжих)</span></label>
+      <input type="number" step="0.1" id="target-ash" value="10.5"><span class="unit">%</span>
+    </div>
+    <div class="row">
+      <label>Одоогийн media density SP</label>
+      <input type="number" step="0.005" id="current-sp" value="1.325"><span class="unit">g/cm³</span>
+    </div>
+    <div class="row">
+      <label>2ц грэб тэжээлийн үнс <span class="hint">(зөвхөн ash)</span></label>
+      <input type="number" step="0.1" id="measured-ash" value="24.5"><span class="unit">%</span>
+    </div>
+    <div class="row">
+      <label>NGM цонх ±</label>
+      <input type="number" step="0.01" id="ngm-window" value="0.10"><span class="unit">g/cm³</span>
+    </div>
+    <div class="callout">
+      Грэб дээж зөвхөн <b>үнс</b> хэмждэг (washability биш). Engine үүнийг blend washability-ийн таамаглах
+      үнстэй харьцуулж, зөрвөл washability-ийн масс тархалтыг залруулна (Doc 02 §5.1, мөр 309).
+    </div>
+  </section>
+
+  <!-- CARD 3: BLEND WASHABILITY (nominal vs corrected) -->
+  <section class="card" data-s="wash">
+    <h2>3. Blend washability — таамаг vs залруулсан <span class="badge calc">auto</span></h2>
+    <div class="mgrid">
+      <div class="metric">
+        <div class="k">Таамаг тэжээл үнс</div>
+        <div class="v"><span id="o-pred-ash">—</span><small> %</small></div>
+      </div>
+      <div class="metric">
+        <div class="k">Хэмжсэн тэжээл үнс</div>
+        <div class="v"><span id="o-meas-ash">—</span><small> %</small></div>
+      </div>
+    </div>
+    <div class="mgrid" style="margin-top:10px;">
+      <div class="metric">
+        <div class="k">Залруулга (масс tilt k)</div>
+        <div class="v"><span id="o-tilt">—</span></div>
+      </div>
+      <div class="metric">
+        <div class="k">Залруулсан тэжээл үнс</div>
+        <div class="v"><span id="o-corr-ash">—</span><small> %</small></div>
+      </div>
+    </div>
+    <div id="pin-note" class="note"></div>
+    <svg class="curve" id="curve" viewBox="0 0 340 230" preserveAspectRatio="none"></svg>
+    <div class="legend">
+      <span class="sw" style="background:var(--nominal);"></span>Таамаг муруй &nbsp;
+      <span class="sw" style="background:var(--corrected);"></span>Залруулсан &nbsp;
+      <span class="sw" style="background:var(--bad);"></span>Зөвлөсөн cut
+    </div>
+  </section>
+
+  <!-- CARD 4: SP RECOMMENDATION -->
+  <section class="card" data-s="reco">
+    <h2>4. SP зөвлөмж <span class="badge calc">auto</span></h2>
+    <div class="reco-box">
+      <div style="font-size:12px; color:var(--muted);">Зөвлөсөн media density SP — ажиллаж байсан SP дээр үнсний залруулгын nudge нэмж</div>
+      <div style="display:flex; align-items:center; gap:12px; margin-top:4px;">
+        <span class="reco-big" id="reco-sp">—</span>
+        <span class="reco-arrow" id="reco-arrow"></span>
+        <span style="font-size:13px; color:var(--muted);">одоогийн <span id="reco-cur">—</span>,
+          nudge <span id="reco-delta" style="font-weight:600;">—</span></span>
+      </div>
+      <div style="font-size:11px; color:var(--muted); margin-top:6px;">
+        Зорилтот ash-ын cut (d₅₀): таамаг <span id="reco-baseline">—</span> → залруулсан <span id="reco-corrected">—</span> g/cm³
+      </div>
+    </div>
+    <div class="mgrid" style="margin-top:10px;">
+      <div class="metric"><div class="k">Хүлээгдэх yield</div><div class="v"><span id="o-yield">—</span><small> %</small></div></div>
+      <div class="metric"><div class="k">NGM @ зөвлөсөн cut</div><div class="v"><span id="o-ngm">—</span><small> %</small></div></div>
+    </div>
+    <div id="ngm-warn"></div>
+    <div id="reco-rationale" class="note"></div>
+  </section>
+
+  <!-- CARD 5: BLEND TABLE -->
+  <section class="card full" data-s="table">
+    <h2>Blend washability хүснэгт (нэгтгэсэн) <span class="badge calc">auto</span></h2>
+    <table class="mini">
+      <thead>
+        <tr>
+          <th class="first">Нягт (RD)</th>
+          <th>Таамаг mass %</th><th>Залруул. mass %</th><th>Ash %</th>
+          <th>Cum float yield % (залр.)</th><th>Cum float ash % (залр.)</th><th>NGM (±w) %</th>
+        </tr>
+      </thead>
+      <tbody id="blend-body"></tbody>
+      <tfoot>
+        <tr><td class="first" style="font-weight:600;">Нийт / жигнэсэн</td>
+          <td><span id="t-pred-mass">—</span></td><td><span id="t-corr-mass">—</span></td>
+          <td><span id="t-ash">—</span></td><td colspan="3"></td></tr>
+      </tfoot>
+    </table>
+  </section>
+
+</div>
+
+<footer style="margin-top:16px; background:var(--card-bg); border:1px solid var(--border); border-radius:8px; padding:12px 16px; display:flex; gap:12px; align-items:center;">
+  <button type="button" onclick="recompute()" style="background:var(--accent); color:#fff; border:0; border-radius:6px; padding:8px 16px; font-size:14px; cursor:pointer;">Дахин тооцоолох</button>
+  <button type="button" onclick="resetDemo()" style="background:#fff; border:1px solid var(--border); border-radius:6px; padding:8px 14px; font-size:13px; cursor:pointer;">Demo reset</button>
+  <span class="note" style="margin-left:auto; font-style:normal;">Phase 1: систем зөвхөн зөвлөнө — SP-ийг оператор тавина.</span>
+</footer>
+
+<details>
+  <summary>Тооцооллын JSON (debug)</summary>
+  <pre class="preview" id="json-preview">—</pre>
+</details>
+
+<script>
+// ============================================================
+// SP Recommendation Engine — Phase 1 demo
+// blend washability → ash-pin to measured grab ash (mass tilt, Doc 02 §5.1)
+//   → recommend cut density for target product ash → media SP nudge.
+// Seam washability = config (washability-input.html localStorage) + embedded demo seams.
+// ============================================================
+
+const WASH_STORE = 'hms_washability_v2';
+const DENS_HI = [1.30,1.325,1.35,1.375,1.40,1.425,1.45,1.50,1.60,1.70,1.80,2.00,2.20,99];
+
+// --- Embedded demo seams (standard grid) ---
+const EMBED_SEAMS = {
+  '4A': { mass:[30,12,11,9,7,6,5,5,4,2,2,2,2,3],     ash:[4,6,8,10,13,17,21,27,35,45,55,62,72,82] },
+  '0C': { mass:[12,6,8,9,10,11,10,9,8,4,3,3,3,4],    ash:[5,8,11,14,17,20,23,28,36,46,56,63,73,83] },
+  '6B': { mass:[6,4,6,7,9,11,12,11,10,6,4,4,4,6],    ash:[6,9,12,15,18,22,25,30,38,48,58,64,74,84] },
+};
+
+const NOMINAL_LO = 1.15, NOMINAL_HI = 2.50;
+
+function gridFractions(mass, ash) {
+  const fr = [];
+  let lo = 0;
+  for (let i = 0; i < DENS_HI.length; i++) {
+    fr.push({ lo, hi: DENS_HI[i], mass: mass[i] ?? null, ash: ash[i] ?? null });
+    lo = DENS_HI[i];
+  }
+  return fr;
+}
+function eff(f) { return { lo: f.lo <= 0 ? NOMINAL_LO : f.lo, hi: f.hi >= 99 ? NOMINAL_HI : f.hi }; }
+function mid(f) { const e = eff(f); return (e.lo + e.hi) / 2; }
+function fractionBelow(f, d) { const e = eff(f); if (d >= e.hi) return 1; if (d <= e.lo) return 0; return (d - e.lo) / (e.hi - e.lo); }
+function massWithin(f, a, b) { if (f.mass == null) return 0; const e = eff(f); const lo = Math.max(a, e.lo), hi = Math.min(b, e.hi); if (hi <= lo) return 0; return f.mass * (hi - lo) / (e.hi - e.lo); }
+
+function getAllSeams() {
+  const seams = {};
+  Object.keys(EMBED_SEAMS).forEach(c => { seams[c] = gridFractions(EMBED_SEAMS[c].mass, EMBED_SEAMS[c].ash); });
+  // merge saved washability seams (config) if present
+  try {
+    const store = JSON.parse(localStorage.getItem(WASH_STORE)) || {};
+    Object.keys(store).forEach(c => {
+      const fr = (store[c].fractions || []).map(f => ({ lo: f.density_lo == null ? 0 : f.density_lo, hi: f.density_hi == null ? 99 : f.density_hi, mass: f.mass_pct, ash: f.ash_pct }));
+      if (fr.length) seams[c] = fr;
+    });
+  } catch {}
+  return seams;
+}
+
+// --- Blend: weighted combine on the standard grid ---
+function blendFractions(picks) { // picks: [{code, ratio}]
+  const seams = getAllSeams();
+  const totRatio = picks.reduce((s, p) => s + (p.ratio || 0), 0) || 1;
+  const fr = gridFractions(DENS_HI.map(() => 0), DENS_HI.map(() => null));
+  // accumulate mass and mass*ash per grid bin
+  const accMass = DENS_HI.map(() => 0), accAshNum = DENS_HI.map(() => 0);
+  picks.forEach(p => {
+    const s = seams[p.code]; if (!s) return;
+    const w = (p.ratio || 0) / totRatio;
+    // map seam fractions onto grid by hi match (embedded already on grid; saved may differ → match by hi)
+    s.forEach(sf => {
+      let idx = DENS_HI.indexOf(sf.hi >= 99 ? 99 : sf.hi);
+      if (idx < 0) { // nearest grid bin by hi
+        idx = DENS_HI.findIndex(h => h >= (sf.hi >= 99 ? 99 : sf.hi));
+        if (idx < 0) idx = DENS_HI.length - 1;
+      }
+      if (sf.mass != null) { accMass[idx] += w * sf.mass; if (sf.ash != null) accAshNum[idx] += w * sf.mass * sf.ash; }
+    });
+  });
+  fr.forEach((f, i) => { f.mass = accMass[i]; f.ash = accMass[i] > 0 ? accAshNum[i] / accMass[i] : null; });
+  return fr;
+}
+
+function weightedAsh(fr) {
+  let num = 0, den = 0;
+  fr.forEach(f => { if (f.mass != null && f.ash != null) { num += f.mass * f.ash; den += f.mass; } });
+  return den ? num / den : 0;
+}
+
+// --- Ash-pinning by mass tilt: w_i = m_i * exp(k*(mid_i - midMean)) ---
+function midMean(fr) { let n = 0, d = 0; fr.forEach(f => { if (f.mass != null) { n += f.mass * mid(f); d += f.mass; } }); return d ? n / d : 1.5; }
+function tiltAsh(fr, k, mm) { let num = 0, den = 0; fr.forEach(f => { if (f.mass == null || f.ash == null) return; const w = f.mass * Math.exp(k * (mid(f) - mm)); num += w * f.ash; den += w; }); return den ? num / den : 0; }
+function solveTilt(fr, targetAsh) {
+  const mm = midMean(fr);
+  let lo = -40, hi = 40;
+  const aLo = tiltAsh(fr, lo, mm), aHi = tiltAsh(fr, hi, mm);
+  if (targetAsh <= aLo) return lo; if (targetAsh >= aHi) return hi;
+  for (let i = 0; i < 80; i++) { const m = (lo + hi) / 2; (tiltAsh(fr, m, mm) < targetAsh) ? lo = m : hi = m; }
+  return (lo + hi) / 2;
+}
+function applyTilt(fr, k) {
+  const mm = midMean(fr);
+  let tot = 0; const w = fr.map(f => { const x = (f.mass ?? 0) * Math.exp(k * (mid(f) - mm)); tot += x; return x; });
+  return fr.map((f, i) => ({ ...f, mass: tot ? w[i] / tot * 100 : f.mass }));
+}
+
+function cleanAshAt(fr, d) { let m = 0, an = 0; fr.forEach(f => { if (f.mass == null) return; const b = fractionBelow(f, d); m += f.mass * b; if (f.ash != null) an += f.mass * b * f.ash; }); return m ? an / m : 0; }
+function yieldAt(fr, d) { let m = 0, t = 0; fr.forEach(f => { if (f.mass == null) return; t += f.mass; m += f.mass * fractionBelow(f, d); }); return t ? m / t * 100 : 0; }
+function ngmAt(fr, d, w) { let m = 0, t = 0; fr.forEach(f => { if (f.mass == null) return; t += f.mass; m += massWithin(f, d - w, d + w); }); return t ? m / t * 100 : 0; }
+function cutForProductAsh(fr, targetAsh) {
+  let lo = 1.20, hi = 2.30;
+  if (cleanAshAt(fr, lo) >= targetAsh) return lo;   // can't get cleaner
+  if (cleanAshAt(fr, hi) <= targetAsh) return hi;
+  for (let i = 0; i < 70; i++) { const m = (lo + hi) / 2; (cleanAshAt(fr, m) < targetAsh) ? lo = m : hi = m; }
+  return (lo + hi) / 2;
+}
+
+// --- Blend UI ---
+function seamOptions(sel) {
+  const seams = getAllSeams();
+  return Object.keys(seams).map(c => '<option value="' + c + '"' + (c === sel ? ' selected' : '') + '>' + c + '</option>').join('');
+}
+function addBlendRow(code, ratio) {
+  const list = document.getElementById('blend-list');
+  const div = document.createElement('div');
+  div.className = 'blend-row';
+  div.innerHTML = '<select>' + seamOptions(code) + '</select>' +
+    '<input type="number" min="0" max="100" step="1" placeholder="%" value="' + (ratio ?? '') + '">' +
+    '<button type="button" onclick="this.parentElement.remove();recompute()">×</button>';
+  div.querySelector('select').addEventListener('change', recompute);
+  div.querySelector('input').addEventListener('input', recompute);
+  list.appendChild(div);
+}
+function readPicks() {
+  return [...document.querySelectorAll('#blend-list .blend-row')].map(r => ({
+    code: r.querySelector('select').value,
+    ratio: r.querySelector('input').value === '' ? 0 : parseFloat(r.querySelector('input').value)
+  })).filter(p => p.ratio > 0);
+}
+
+function recompute() {
+  const picks = readPicks();
+  const sumRatio = picks.reduce((s, p) => s + p.ratio, 0);
+  const sumEl = document.getElementById('blend-sum');
+  sumEl.textContent = sumRatio.toFixed(0);
+  sumEl.style.color = Math.abs(sumRatio - 100) <= 1 ? 'var(--ok)' : 'var(--bad)';
+
+  const w = parseFloat(document.getElementById('ngm-window').value) || 0.10;
+  const targetAsh = parseFloat(document.getElementById('target-ash').value) || 10.5;
+  const currentSP = parseFloat(document.getElementById('current-sp').value) || 1.325;
+  const measured = parseFloat(document.getElementById('measured-ash').value);
+
+  if (!picks.length) { document.getElementById('pin-note').textContent = 'Blend хоосон.'; return; }
+
+  const nominal = blendFractions(picks);
+  const predAsh = weightedAsh(nominal);
+
+  // Ash-pinning to measured
+  let corrected = nominal, k = 0;
+  const haveMeas = !isNaN(measured) && measured > 0;
+  if (haveMeas) { k = solveTilt(nominal, measured); corrected = applyTilt(nominal, k); }
+  const corrAsh = weightedAsh(corrected);
+
+  document.getElementById('o-pred-ash').textContent = predAsh.toFixed(1);
+  document.getElementById('o-meas-ash').textContent = haveMeas ? measured.toFixed(1) : '—';
+  document.getElementById('o-tilt').textContent = haveMeas ? (k >= 0 ? '+' : '') + k.toFixed(2) : '—';
+  document.getElementById('o-corr-ash').textContent = haveMeas ? corrAsh.toFixed(1) : predAsh.toFixed(1);
+
+  const pin = document.getElementById('pin-note');
+  if (!haveMeas) pin.textContent = 'Хэмжсэн үнс алга — таамаг муруй ашиглана.';
+  else if (measured > predAsh + 0.05) pin.textContent = 'Хэмжсэн үнс (' + measured.toFixed(1) + '%) > таамаг (' + predAsh.toFixed(1) + '%): тэжээл бохирдсон → масс өндөр нягт руу шилжүүлж (k=' + k.toFixed(2) + '), хаягдал нэмэгдэв.';
+  else if (measured < predAsh - 0.05) pin.textContent = 'Хэмжсэн үнс (' + measured.toFixed(1) + '%) < таамаг (' + predAsh.toFixed(1) + '%): тэжээл цэвэр → масс бага нягт руу шилжив (k=' + k.toFixed(2) + ').';
+  else pin.textContent = 'Хэмжсэн ≈ таамаг — залруулга бараг шаардлагагүй.';
+
+  // SP recommendation: nudge = (target-ash cut on corrected) − (on nominal/predicted).
+  // Isolates the effect of the measured-ash deviation; transfers as a delta onto the
+  // operator's working media SP (media density ↔ d50 differ by ~constant plant offset).
+  const baselineCut = cutForProductAsh(nominal, targetAsh);
+  const correctedCut = cutForProductAsh(corrected, targetAsh);
+  const nudge = correctedCut - baselineCut;
+  const recommendedSP = currentSP + nudge;
+  const recoYield = yieldAt(corrected, correctedCut);
+  const recoNgm = ngmAt(corrected, correctedCut, w);
+
+  document.getElementById('reco-sp').textContent = recommendedSP.toFixed(3);
+  document.getElementById('reco-cur').textContent = currentSP.toFixed(3);
+  document.getElementById('reco-baseline').textContent = baselineCut.toFixed(3);
+  document.getElementById('reco-corrected').textContent = correctedCut.toFixed(3);
+  const arrow = document.getElementById('reco-arrow');
+  const dEl = document.getElementById('reco-delta');
+  if (Math.abs(nudge) < 0.0015) { arrow.textContent = '→'; arrow.className = 'reco-arrow'; dEl.textContent = '≈0 (хэвээр)'; dEl.className = ''; }
+  else if (nudge < 0) { arrow.textContent = '↓'; arrow.className = 'reco-arrow delta-down'; dEl.textContent = nudge.toFixed(3); dEl.className = 'delta-down'; }
+  else { arrow.textContent = '↑'; arrow.className = 'reco-arrow delta-up'; dEl.textContent = '+' + nudge.toFixed(3); dEl.className = 'delta-up'; }
+
+  document.getElementById('o-yield').textContent = recoYield.toFixed(1);
+  document.getElementById('o-ngm').textContent = recoNgm.toFixed(1);
+
+  const warn = document.getElementById('ngm-warn');
+  warn.innerHTML = recoNgm > 25 ? '<div class="warn-box">NGM @ зөвлөсөн cut = ' + recoNgm.toFixed(1) + '% (>25%) — ялгалт хүндэрсэн. Ep ≤0.05 бариул, spigot/vortex элэгдэлд онцгой мэдрэг (Doc 02 §5.3).</div>' : '';
+
+  const rat = document.getElementById('reco-rationale');
+  if (haveMeas && measured > predAsh + 0.05) rat.textContent = 'Тэжээлийн үнс таамгаас өндөр (бохир) → баяжмал ash-аа ' + targetAsh.toFixed(1) + '%-д барихын тулд cut density-г ' + Math.abs(nudge).toFixed(3) + ' g/cm³ буулгаж илүү цэвэр ялгахыг зөвлөж байна. Phase 1: зөвхөн зөвлөмж, SP-ийг оператор тавина.';
+  else if (haveMeas && measured < predAsh - 0.05) rat.textContent = 'Тэжээлийн үнс таамгаас бага (цэвэр) → cut density-г ' + nudge.toFixed(3) + ' g/cm³ өсгөж yield нэмэхийг зөвлөж байна. Phase 1: зөвхөн зөвлөмж.';
+  else rat.textContent = 'Хэмжсэн үнс таамагтай ойролцоо — SP-ийг бараг хэвээр (nudge ' + nudge.toFixed(3) + ').';
+
+  renderTable(nominal, corrected, w);
+  drawCurve(nominal, corrected, correctedCut);
+  document.getElementById('json-preview').textContent = JSON.stringify({ picks, predAsh:+predAsh.toFixed(2), measured, tilt_k:+k.toFixed(3), corrAsh:+corrAsh.toFixed(2), baselineCut:+baselineCut.toFixed(3), correctedCut:+correctedCut.toFixed(3), nudge:+nudge.toFixed(3), currentSP, recommendedSP:+recommendedSP.toFixed(3), recoYield:+recoYield.toFixed(1), recoNgm:+recoNgm.toFixed(1) }, null, 2);
+}
+
+function renderTable(nom, corr, w) {
+  const body = document.getElementById('blend-body'); body.innerHTML = '';
+  let cumMass = 0, cumAshNum = 0, totCorr = 0;
+  corr.forEach(f => { if (f.mass != null) totCorr += f.mass; });
+  let tPred = 0, tCorr = 0;
+  corr.forEach((f, i) => {
+    const rd = f.hi >= 99 ? 'sink' : f.hi.toFixed(3).replace(/0+$/,'').replace(/\.$/,'');
+    const predM = nom[i].mass ?? 0, corrM = f.mass ?? 0;
+    tPred += predM; tCorr += corrM;
+    cumMass += corrM; if (f.ash != null) cumAshNum += corrM * f.ash;
+    const cumY = totCorr ? cumMass / totCorr * 100 : 0;
+    const cumA = cumMass ? cumAshNum / cumMass : 0;
+    const ngm = ngmAt(corr, f.hi >= 99 ? eff(f).hi : f.hi, w);
+    const tr = document.createElement('tr');
+    tr.innerHTML = '<td class="first">' + rd + '</td>' +
+      '<td>' + predM.toFixed(2) + '</td>' +
+      '<td style="color:var(--corrected);">' + corrM.toFixed(2) + '</td>' +
+      '<td>' + (f.ash != null ? f.ash.toFixed(1) : '—') + '</td>' +
+      '<td style="color:var(--corrected);">' + cumY.toFixed(1) + '</td>' +
+      '<td style="color:var(--corrected);">' + cumA.toFixed(1) + '</td>' +
+      '<td' + (ngm > 25 ? ' style="color:var(--bad);font-weight:600;"' : '') + '>' + ngm.toFixed(1) + '</td>';
+    body.appendChild(tr);
+  });
+  document.getElementById('t-pred-mass').textContent = tPred.toFixed(1);
+  document.getElementById('t-corr-mass').textContent = tCorr.toFixed(1);
+  document.getElementById('t-ash').textContent = weightedAsh(corr).toFixed(1) + ' %';
+}
+
+function drawCurve(nom, corr, recoCut) {
+  const svg = document.getElementById('curve'); svg.innerHTML = '';
+  const ns = 'http://www.w3.org/2000/svg';
+  const W = 340, H = 230, padL = 30, padR = 8, padT = 10, padB = 22;
+  const dMin = 1.20, dMax = 2.20, steps = 50;
+  function curvePts(fr) {
+    const pts = [];
+    for (let i = 0; i <= steps; i++) { const d = dMin + (dMax - dMin) * i / steps; pts.push({ x: yieldAt(fr, d), y: cleanAshAt(fr, d) }); }
+    return pts;
+  }
+  const pNom = curvePts(nom), pCorr = curvePts(corr);
+  let maxAsh = 1; pNom.concat(pCorr).forEach(p => { if (p.y > maxAsh) maxAsh = p.y; });
+  maxAsh = Math.ceil(maxAsh / 5) * 5;
+  const sx = v => padL + (v / 100) * (W - padL - padR);
+  const sy = v => padT + (1 - v / maxAsh) * (H - padT - padB);
+  const line = (x1, y1, x2, y2, c) => { const l = document.createElementNS(ns, 'line'); l.setAttribute('x1', x1); l.setAttribute('y1', y1); l.setAttribute('x2', x2); l.setAttribute('y2', y2); l.setAttribute('stroke', c); svg.appendChild(l); };
+  line(padL, padT, padL, H - padB, '#d0d7de'); line(padL, H - padB, W - padR, H - padB, '#d0d7de');
+  [0, maxAsh / 2, maxAsh].forEach(v => { const t = document.createElementNS(ns, 'text'); t.setAttribute('x', padL - 3); t.setAttribute('y', sy(v) + 3); t.setAttribute('text-anchor', 'end'); t.textContent = v.toFixed(0); svg.appendChild(t); });
+  [0, 50, 100].forEach(v => { const t = document.createElementNS(ns, 'text'); t.setAttribute('x', sx(v)); t.setAttribute('y', H - padB + 12); t.setAttribute('text-anchor', 'middle'); t.textContent = v; svg.appendChild(t); });
+  const xl = document.createElementNS(ns, 'text'); xl.setAttribute('x', (padL + W - padR) / 2); xl.setAttribute('y', H - 2); xl.setAttribute('text-anchor', 'middle'); xl.textContent = 'Cumulative yield % (x) ↔ баяжмал ash % (y)'; svg.appendChild(xl);
+  const poly = (pts, c) => { const p = document.createElementNS(ns, 'polyline'); p.setAttribute('fill', 'none'); p.setAttribute('stroke', c); p.setAttribute('stroke-width', '1.6'); p.setAttribute('points', pts.map(q => sx(q.x) + ',' + sy(q.y)).join(' ')); svg.appendChild(p); };
+  poly(pNom, '#1f2328'); poly(pCorr, '#6639ba');
+  // reco cut marker (on corrected)
+  const cy = yieldAt(corr, recoCut);
+  line(sx(cy), padT, sx(cy), H - padB, '#cf222e');
+  const cl = svg.lastChild; cl.setAttribute('stroke-dasharray', '4 3');
+  const ct = document.createElementNS(ns, 'text'); ct.setAttribute('x', Math.min(sx(cy) + 3, W - 56)); ct.setAttribute('y', padT + 9); ct.setAttribute('fill', '#cf222e'); ct.textContent = 'cut ' + recoCut.toFixed(3); svg.appendChild(ct);
+}
+
+function resetDemo() {
+  document.getElementById('blend-list').innerHTML = '';
+  addBlendRow('4A', 40); addBlendRow('0C', 50); addBlendRow('6B', 10);
+  document.getElementById('target-ash').value = '10.5';
+  document.getElementById('current-sp').value = '1.325';
+  document.getElementById('measured-ash').value = '24.5';
+  document.getElementById('ngm-window').value = '0.10';
+  recompute();
+}
+
+// init
+['target-ash','current-sp','measured-ash','ngm-window'].forEach(id => document.getElementById(id).addEventListener('input', recompute));
+resetDemo();
+</script>
+
+</body>
+</html>
