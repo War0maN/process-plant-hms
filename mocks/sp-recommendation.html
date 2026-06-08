@@ -68,6 +68,10 @@
   .wear-grid .hd { font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:.3px; }
   .wear-grid input { width:100%; padding:3px 5px; border:1px solid var(--border); border-radius:4px; font-size:12px; text-align:right; }
   .wear-grid .out { text-align:right; font-weight:600; }
+  .wear-hrs { display:grid; grid-template-columns:1fr 80px 24px; gap:4px 8px; align-items:center; margin-top:8px; font-size:12px; }
+  .wear-hrs label { color:var(--muted); }
+  .wear-hrs input { width:100%; padding:3px 5px; border:1px solid var(--border); border-radius:4px; font-size:12px; text-align:right; }
+  .wear-hrs .u { font-size:11px; color:var(--muted); }
   .reco-box.pump { border-color:#1a7f37; background:#f2fbf4; }
   .reco-box.pump .reco-big { color:var(--ok); }
   .alert { margin-top:6px; padding:6px 9px; border-radius:0 4px 4px 0; font-size:11px; }
@@ -84,7 +88,7 @@
 
 <header class="app-header">
   <h1>SP Recommendation Engine — хоёр шатлалт DMC <span class="badge calc">demo</span></h1>
-  <div class="sub">Reference Plant A · blend washability → 2ц үнсээр ash-pinning → Primary (коксжих) + Secondary (эрчим хүч) SP зөвлөмж · Phase 1 shadow</div>
+  <div class="sub">Reference Plant A · ENGINE: <b>operator-input.html</b> (ээлжийн оролт) + <b>washability-input.html</b> (seam reference) уншиж зөвлөнө · media density SP (washability) + pump speed SP (элэгдэл) · Phase 1 shadow</div>
 </header>
 
 <div class="grid">
@@ -201,19 +205,27 @@
       <div class="wear-col" id="wear-pri">
         <h3>Primary DMC 1300mm <span class="tag">коксжих</span></h3>
         <div class="wear-grid">
-          <span class="hd">Хэсэг</span><span class="hd">Шинэ Ø</span><span class="hd">Хэмж. Ø</span><span class="hd">Op ц</span>
-          <span>Spigot (хошуу)</span><input type="number" step="1" data-w="pri-sp-base" value="540"><input type="number" step="1" data-w="pri-sp-meas" value="558"><input type="number" step="50" data-w="pri-sp-hrs" value="6500">
-          <span>Vortex finder</span><input type="number" step="1" data-w="pri-vf-base" value="670"><input type="number" step="1" data-w="pri-vf-meas" value="678"><input type="number" step="50" data-w="pri-vf-hrs" value="6500">
-          <span>Impeller (op ц)</span><span class="out" style="color:var(--muted);">—</span><span class="out" style="color:var(--muted);">—</span><input type="number" step="50" data-w="pri-im-hrs" value="3100">
+          <span class="hd">Хэсэг</span><span class="hd">Дизайн Ø</span><span class="hd">Хэмж. Ø</span><span class="hd">Элэгдэл</span>
+          <span>Spigot (хошуу)</span><span class="out" style="color:var(--muted);" id="base-pri-sp">540</span><input type="number" step="1" data-w="pri-sp-meas" value="558"><span class="out" id="wf-pri-sp">—</span>
+          <span>Vortex finder</span><span class="out" style="color:var(--muted);" id="base-pri-vf">670</span><input type="number" step="1" data-w="pri-vf-meas" value="678"><span class="out" id="wf-pri-vf">—</span>
+        </div>
+        <div class="wear-hrs">
+          <label>Циклон run-hours</label><input type="number" step="50" data-w="pri-cyc-hrs" value="6500"><span class="u">ц</span>
+          <label>Насос run-hours</label><input type="number" step="50" data-w="pri-pump-hrs" value="3100"><span class="u">ц</span>
+          <label>Impeller төлөв (1-5)</label><input type="number" min="1" max="5" step="1" data-w="pri-im-score" value="3"><span class="u">балл</span>
         </div>
       </div>
       <div class="wear-col" id="wear-sec">
         <h3>Secondary DMC 1000mm <span class="tag">эрчим хүч</span></h3>
         <div class="wear-grid">
-          <span class="hd">Хэсэг</span><span class="hd">Шинэ Ø</span><span class="hd">Хэмж. Ø</span><span class="hd">Op ц</span>
-          <span>Spigot (хошуу)</span><input type="number" step="1" data-w="sec-sp-base" value="400"><input type="number" step="1" data-w="sec-sp-meas" value="410"><input type="number" step="50" data-w="sec-sp-hrs" value="5200">
-          <span>Vortex finder</span><input type="number" step="1" data-w="sec-vf-base" value="535"><input type="number" step="1" data-w="sec-vf-meas" value="538"><input type="number" step="50" data-w="sec-vf-hrs" value="5200">
-          <span>Impeller (op ц)</span><span class="out" style="color:var(--muted);">—</span><span class="out" style="color:var(--muted);">—</span><input type="number" step="50" data-w="sec-im-hrs" value="4400">
+          <span class="hd">Хэсэг</span><span class="hd">Дизайн Ø</span><span class="hd">Хэмж. Ø</span><span class="hd">Элэгдэл</span>
+          <span>Spigot (хошуу)</span><span class="out" style="color:var(--muted);" id="base-sec-sp">400</span><input type="number" step="1" data-w="sec-sp-meas" value="410"><span class="out" id="wf-sec-sp">—</span>
+          <span>Vortex finder</span><span class="out" style="color:var(--muted);" id="base-sec-vf">535</span><input type="number" step="1" data-w="sec-vf-meas" value="538"><span class="out" id="wf-sec-vf">—</span>
+        </div>
+        <div class="wear-hrs">
+          <label>Циклон run-hours</label><input type="number" step="50" data-w="sec-cyc-hrs" value="5200"><span class="u">ц</span>
+          <label>Насос run-hours</label><input type="number" step="50" data-w="sec-pump-hrs" value="4400"><span class="u">ц</span>
+          <label>Impeller төлөв (1-5)</label><input type="number" min="1" max="5" step="1" data-w="sec-im-score" value="4"><span class="u">балл</span>
         </div>
       </div>
     </div>
@@ -223,7 +235,7 @@
       <div class="row"><label>Pump speed одоо — Primary</label><input type="number" step="0.5" id="pump-pri" value="78"><span class="unit">VFD %</span></div>
       <div class="row"><label>Pump speed одоо — Secondary</label><input type="number" step="0.5" id="pump-sec" value="72"><span class="unit">VFD %</span></div>
     </div>
-    <p class="note">Ø = дотоод диаметр (мм), bore gauge-ээр. Engine элэгдэл %-г (хэмж.−шинэ)/шинэ-ээр бодно. Доорх амьдрал/босго нь демо калибраци — Doc 03 §13-ийн бодит утга орвол солино.</p>
+    <p class="note">Дизайн Ø = үйлдвэрийн config (Doc 03 §3), өөрчлөгддөггүй. Хэмж. Ø = оператор bore gauge-ээр (operator-input.html). Элэгдэл% = (хэмж.−дизайн)/дизайн. Циклон run-hours нь spigot+vortex-ийн амьдралд, насос run-hours+impeller балл нь impeller-д. Амьдрал/босго/gain бүгд демо калибраци — Doc 03 §13-ийн бодит утга орвол солино.</p>
   </section>
 
   <!-- 5c. WEAR → PUMP SPEED + REPLACEMENT ALERTS -->
@@ -274,9 +286,11 @@
 
 </div>
 
-<footer style="margin-top:16px; background:var(--card-bg); border:1px solid var(--border); border-radius:8px; padding:12px 16px; display:flex; gap:12px; align-items:center;">
+<footer style="margin-top:16px; background:var(--card-bg); border:1px solid var(--border); border-radius:8px; padding:12px 16px; display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
+  <button type="button" onclick="loadFromOperator(true)" style="background:var(--ok); color:#fff; border:0; border-radius:6px; padding:8px 16px; font-size:14px; cursor:pointer;">📥 operator-input-аас татах</button>
   <button type="button" onclick="recompute()" style="background:var(--accent); color:#fff; border:0; border-radius:6px; padding:8px 16px; font-size:14px; cursor:pointer;">Дахин тооцоолох</button>
-  <button type="button" onclick="resetDemo()" style="background:#fff; border:1px solid var(--border); border-radius:6px; padding:8px 14px; font-size:13px; cursor:pointer;">Demo reset</button>
+  <button type="button" onclick="resetDemo()" style="background:#fff; border:1px solid var(--border); border-radius:6px; padding:8px 14px; font-size:13px; cursor:pointer;">Demo утга</button>
+  <span id="op-status" style="font-size:12px; color:var(--muted);"></span>
 </footer>
 
 <details>
@@ -294,7 +308,15 @@
 // ============================================================
 
 const WASH_STORE = 'hms_washability_v2';
+const OP_STORE = 'hms_operator_input_v1';   // operator-input.html-ийн ээлжийн бичлэг
 const DENS_HI = [1.30,1.325,1.35,1.375,1.40,1.425,1.45,1.50,1.60,1.70,1.80,2.00,2.20,99];
+
+// Plant config (Doc 03) — engine-ийн тогтмол хүрээ. Үйлдвэр бүрт нэг удаа.
+const CONFIG = {
+  baseDia: { pri: { sp: 540, vf: 670 }, sec: { sp: 400, vf: 535 } },  // дизайн (шинэ) Ø, Doc 03 §3
+  feed:    { pri: 613, sec: 153 },                                     // nominal t/h, Doc 03 §4
+};
+function readOperator() { try { return JSON.parse(localStorage.getItem(OP_STORE)) || null; } catch { return null; } }
 
 // Demo seams — coking-leaning (clean), so two-stage split is realistic
 const EMBED_SEAMS = {
@@ -387,24 +409,45 @@ const WEAR = {
   vfdMax:     95,     // VFD% practical ceiling
 };
 const wv = k => { const el = document.querySelector('[data-w="' + k + '"]'); return el ? (parseFloat(el.value) || 0) : 0; };
-function wearFrac(baseK, measK) { const b = wv(baseK), m = wv(measK); return b > 0 ? Math.max(0, (m - b) / b) : 0; }
+function boreFrac(base, meas) { return base > 0 ? Math.max(0, (meas - base) / base) : 0; }
 
 // one cyclone: returns drift, pump nudge, Ep est, and per-part alert objects
+//   baseline Ø = CONFIG (Doc 03 §3); measured Ø + run-hours + impeller score = operator (operator-input.html)
 function cycloneWear(pfx, feed, pumpCur) {
-  const spFrac = wearFrac(pfx + '-sp-base', pfx + '-sp-meas');
-  const vfFrac = wearFrac(pfx + '-vf-base', pfx + '-vf-meas');
+  const base = CONFIG.baseDia[pfx];
+  const spFrac = boreFrac(base.sp, wv(pfx + '-sp-meas'));
+  const vfFrac = boreFrac(base.vf, wv(pfx + '-vf-meas'));
   const drift = -WEAR.gainSpigot * spFrac + WEAR.gainVortex * vfFrac;   // signed g/cm³ (worn spigot → negative)
   let nudge = -drift / WEAR.pumpGain;                                    // VFD% to restore cut (spigot worn → speed up)
   const recoRaw = pumpCur + nudge;
   const reco = Math.min(WEAR.vfdMax, Math.max(0, recoRaw));
   nudge = reco - pumpCur;
   const ep = WEAR.epBase + WEAR.epVortex * vfFrac + (spFrac > WEAR.thr.sp * 0.7 ? WEAR.epSpigotRope * (spFrac - WEAR.thr.sp * 0.7) : 0);
+  const cycHrs = wv(pfx + '-cyc-hrs'), pumpHrs = wv(pfx + '-pump-hrs'), imScore = wv(pfx + '-im-score');
   const parts = [
-    partAlert('Spigot (хошуу)', wv(pfx + '-sp-hrs'), WEAR.life.sp, spFrac, WEAR.thr.sp, feed),
-    partAlert('Vortex finder', wv(pfx + '-vf-hrs'), WEAR.life.vf, vfFrac, WEAR.thr.vf, feed),
-    partAlert('Impeller', wv(pfx + '-im-hrs'), WEAR.life.im, null, null, feed),
+    partAlert('Spigot (хошуу)', cycHrs, WEAR.life.sp, spFrac, WEAR.thr.sp, feed),
+    partAlert('Vortex finder', cycHrs, WEAR.life.vf, vfFrac, WEAR.thr.vf, feed),
+    impellerAlert('Impeller', pumpHrs, WEAR.life.im, imScore, feed),
   ];
   return { spFrac, vfFrac, drift, nudge, reco, recoRaw, ep, parts, hitMax: recoRaw > WEAR.vfdMax };
+}
+
+// impeller has no bore measurement — life by pump run-hours + operator score (1=шинэ, 5=солих)
+function impellerAlert(name, hrs, lifeBase, score, feed) {
+  const lifeFrac = lifeBase > 0 ? hrs / lifeBase : 0;
+  const remHrs = Math.max(0, (1 - lifeFrac) * lifeBase), remT = remHrs * feed;
+  let level = 'ok', msg = '';
+  if (lifeFrac >= 1 || score >= 5) {
+    level = 'red';
+    const why = [lifeFrac >= 1 ? 'амьдрал дүүрсэн' : null, score >= 5 ? 'оператор төлөв 5/5' : null].filter(Boolean).join(' + ');
+    msg = name + ': дараагийн зогсолтоор СОЛИХ (' + why + ').';
+  } else if (lifeFrac >= 0.8 || score >= 4) {
+    level = 'amber';
+    msg = name + ': ойртож байна — ~' + Math.round(remHrs) + ' ц (~' + Math.round(remT / 1000) + ' мянган т) дараа солих' + (score ? ', төлөв ' + score + '/5' : '') + '.';
+  } else {
+    msg = name + ': хэвийн — ~' + Math.round(remHrs) + ' ц үлдсэн' + (score ? ', төлөв ' + score + '/5' : '') + '.';
+  }
+  return { name, level, msg, lifeFrac: Math.min(1, lifeFrac), frac: null };
 }
 
 function partAlert(name, hrs, lifeBase, frac, thr, feed) {
@@ -570,7 +613,7 @@ function recompute() {
   const pumpSec = parseFloat(document.getElementById('pump-sec').value) || 72;
   const wPri = cycloneWear('pri', feedPri, pumpPri);
   const wSec = cycloneWear('sec', feedSec, pumpSec);
-  renderWear(1, wPri, pumpPri); renderWear(2, wSec, pumpSec);
+  renderWear(1, 'pri', wPri, pumpPri); renderWear(2, 'sec', wSec, pumpSec);
   renderAlerts('alerts-pri', wPri.parts); renderAlerts('alerts-sec', wSec.parts);
 
   renderTable(nominal, corrected, w);
@@ -578,10 +621,13 @@ function recompute() {
   document.getElementById('json-preview').textContent = JSON.stringify({ picks, conservative, pendingSeams, consShift:+consShift.toFixed(3), predAsh:+predAsh.toFixed(2), measured, tilt_k:+k.toFixed(3), corrAsh:+corrAsh.toFixed(2), mediaSP:{ primary:{ baseCut:+baseCut1.toFixed(3), corrCut:+corrCut1.toFixed(3), nudge:+nudge1.toFixed(3), recoSP:+recoSP1.toFixed(3), ngm:+ngm1.toFixed(1) }, secondary:{ baseCut:+baseCut2.toFixed(3), corrCut:+corrCut2.toFixed(3), nudge:+nudge2.toFixed(3), recoSP:+recoSP2.toFixed(3), ngm:+ngm2.toFixed(1) } }, pumpSP:{ primary:{ spigotWear:+(wPri.spFrac*100).toFixed(1), vortexWear:+(wPri.vfFrac*100).toFixed(1), cutDrift:+wPri.drift.toFixed(3), nudge:+wPri.nudge.toFixed(1), recoVFD:+wPri.reco.toFixed(1), ep:+wPri.ep.toFixed(3) }, secondary:{ spigotWear:+(wSec.spFrac*100).toFixed(1), vortexWear:+(wSec.vfFrac*100).toFixed(1), cutDrift:+wSec.drift.toFixed(3), nudge:+wSec.nudge.toFixed(1), recoVFD:+wSec.reco.toFixed(1), ep:+wSec.ep.toFixed(3) } }, balance:part }, null, 2);
 }
 
-function renderWear(n, wd, pumpCur) {
+function renderWear(n, pfx, wd, pumpCur) {
   document.getElementById('pump-reco' + n).textContent = wd.reco.toFixed(1);
   document.getElementById('pump-cur' + n).textContent = pumpCur.toFixed(1);
   setArrowPct(document.getElementById('pump-arrow' + n), document.getElementById('pump-delta' + n), wd.nudge);
+  const spCell = document.getElementById('wf-' + pfx + '-sp'), vfCell = document.getElementById('wf-' + pfx + '-vf');
+  spCell.textContent = (wd.spFrac * 100).toFixed(1) + '%'; spCell.style.color = wd.spFrac >= WEAR.thr.sp ? 'var(--bad)' : wd.spFrac >= WEAR.thr.sp * 0.8 ? 'var(--warn)' : 'var(--text)';
+  vfCell.textContent = (wd.vfFrac * 100).toFixed(1) + '%'; vfCell.style.color = wd.vfFrac >= WEAR.thr.vf ? 'var(--bad)' : wd.vfFrac >= WEAR.thr.vf * 0.8 ? 'var(--warn)' : 'var(--text)';
   document.getElementById('w-sp' + n).textContent = (wd.spFrac * 100).toFixed(1);
   const dEl = document.getElementById('w-drift' + n);
   dEl.textContent = (wd.drift >= 0 ? '+' : '') + wd.drift.toFixed(3);
@@ -647,22 +693,63 @@ function drawCurve(nom, corr, c1, c2) {
   const t2 = document.createElementNS(ns, 'text'); t2.setAttribute('x', Math.min(sx(y2) + 2, W - 52)); t2.setAttribute('y', padT + 20); t2.setAttribute('fill', '#bf8700'); t2.textContent = 'ρ₂ ' + c2.toFixed(3); svg.appendChild(t2);
 }
 
+function setBaseLabels() {
+  document.getElementById('base-pri-sp').textContent = CONFIG.baseDia.pri.sp;
+  document.getElementById('base-pri-vf').textContent = CONFIG.baseDia.pri.vf;
+  document.getElementById('base-sec-sp').textContent = CONFIG.baseDia.sec.sp;
+  document.getElementById('base-sec-vf').textContent = CONFIG.baseDia.sec.vf;
+}
+
+// Pull this shift's operator record (hms_operator_input_v1) into engine inputs.
+//   Engine = data-source agnostic: store байхгүй бол демо утга хэвээр.
+function loadFromOperator(announce) {
+  const d = readOperator();
+  const st = document.getElementById('op-status');
+  if (!d) { if (announce) { st.textContent = 'operator-input.html-д хадгалсан бичлэг алга — демо утгаар ажиллана.'; st.style.color = 'var(--warn)'; } return false; }
+  const setv = (id, v) => { if (v != null && !isNaN(v)) document.getElementById(id).value = v; };
+  const setw = (k, v) => { const el = document.querySelector('[data-w="' + k + '"]'); if (el && v != null && !isNaN(v)) el.value = v; };
+  const sp = d.sp || {}, eq = d.equipment || {}, pv = d.pv || {}, feed = d.feed || {};
+  if (Array.isArray(d.seams) && d.seams.some(s => s.ratio_pct != null)) {
+    document.getElementById('blend-list').innerHTML = '';
+    d.seams.forEach(s => { if (s.ratio_pct != null) addBlendRow(s.name, s.ratio_pct); });
+  }
+  setv('target-coking', sp.target_ash_coking); setv('target-thermal', sp.target_ash_thermal);
+  setv('sp-pri', sp.sp_media_density_pri); setv('sp-sec', sp.sp_media_density_sec);
+  setv('measured-ash', feed.raw_ash_pct);
+  setv('pump-pri', sp.sp_pump_speed_pri); setv('pump-sec', sp.sp_pump_speed_sec);
+  setv('feed-pri', pv.feed_flow_pri); setv('feed-sec', pv.feed_flow_sec);
+  setw('pri-sp-meas', eq.spigot_dia_pri); setw('sec-sp-meas', eq.spigot_dia_sec);
+  setw('pri-vf-meas', eq.vortex_dia_pri); setw('sec-vf-meas', eq.vortex_dia_sec);
+  setw('pri-cyc-hrs', eq.run_hours_cyclone_pri); setw('sec-cyc-hrs', eq.run_hours_cyclone_sec);
+  setw('pri-pump-hrs', eq.run_hours_pump_pri); setw('sec-pump-hrs', eq.run_hours_pump_sec);
+  setw('pri-im-score', eq.impeller_score_pri); setw('sec-im-score', eq.impeller_score_sec);
+  recompute();
+  const when = d.meta ? ((d.meta.date || '') + ' ' + (d.meta.shift || '')).trim() : '';
+  st.textContent = '✓ operator-input-аас татлаа' + (when ? ' (' + when + ')' : '') + '.'; st.style.color = 'var(--ok)';
+  return true;
+}
+
 function resetDemo() {
   document.getElementById('blend-list').innerHTML = '';
   addBlendRow('4A', 40); addBlendRow('0C', 50); addBlendRow('6B', 10);
-  document.getElementById('target-coking').value = '10.5';
-  document.getElementById('target-thermal').value = '24.0';
-  document.getElementById('sp-pri').value = '1.330';
-  document.getElementById('sp-sec').value = '1.520';
-  document.getElementById('measured-ash').value = '24.0';
-  document.getElementById('ngm-window').value = '0.10';
+  const set = (id, v) => document.getElementById(id).value = v;
+  set('target-coking', '10.5'); set('target-thermal', '24.0');
+  set('sp-pri', '1.330'); set('sp-sec', '1.520');
+  set('measured-ash', '24.0'); set('ngm-window', '0.10'); set('cons-margin', '0.025');
+  set('feed-pri', '613'); set('feed-sec', '153'); set('pump-pri', '78'); set('pump-sec', '72');
+  const setw = (k, v) => { const el = document.querySelector('[data-w="' + k + '"]'); if (el) el.value = v; };
+  setw('pri-sp-meas', 558); setw('pri-vf-meas', 678); setw('pri-cyc-hrs', 6500); setw('pri-pump-hrs', 3100); setw('pri-im-score', 3);
+  setw('sec-sp-meas', 410); setw('sec-vf-meas', 538); setw('sec-cyc-hrs', 5200); setw('sec-pump-hrs', 4400); setw('sec-im-score', 4);
+  document.getElementById('op-status').textContent = 'Демо утга ачаалсан.'; document.getElementById('op-status').style.color = 'var(--muted)';
   recompute();
 }
 
 ['target-coking','target-thermal','sp-pri','sp-sec','measured-ash','ngm-window','cons-margin','feed-pri','feed-sec','pump-pri','pump-sec']
   .forEach(id => document.getElementById(id).addEventListener('input', recompute));
 document.querySelectorAll('[data-w]').forEach(el => el.addEventListener('input', recompute));
+setBaseLabels();
 resetDemo();
+loadFromOperator(false);   // operator-input бичлэг байвал автоматаар татна
 </script>
 
 </body>
