@@ -1,0 +1,151 @@
+# =============================================================================
+# Plant Config — Reference Plant A
+# =============================================================================
+# Энэ файл нь Doc 03 (Plant Profile)-ийн машинд уншигдах хувилбар. Engine кодыг
+# өөрчлөхгүйгээр шинэ үйлдвэрт = энэ файлыг хувилж бөглөнө (Doc 04 §1.2 зарчим 1).
+#
+# Утгын төлөв:
+#   confirmed — Duk/үйлдвэрээс баталгаажсан
+#   design    — зураг төслийн (nameplate) тоо, бодит ажлын утга биш
+#   TODO      — инженерээс хүлээж буй (docs/05-plant-data-request-тай тулгана)
+#
+# Маргааш инженерийн xlsx хариу ирмэгц TODO талбаруудыг бөглөнө.
+# =============================================================================
+
+plant:
+  name: "CHPP — Coarse circuit"
+  reference_name: "Reference Plant A"
+  location: "Өмнөговь"           # confirmed
+  owner: "MMC"                    # confirmed
+  commissioned_year: 2011         # confirmed
+  nameplate_capacity_tph: 900     # confirmed
+  coal_types: ["coking", "thermal"]
+
+# --- Баяжуулалтын схем (Doc 03 §2) — хоёр шатлалт DMC --------------------------
+circuit:
+  type: "two-stage-dmc"
+  primary:
+    role: "coking"
+    cyclones_parallel: null       # TODO §2 — хэдэн циклон зэрэгцээ
+  secondary:
+    role: "thermal"
+    cyclones_parallel: null       # TODO §2
+  desliming_screens: null         # TODO §2
+  crushers: null                  # TODO §2
+
+# --- Циклоны геометр (Doc 03 §3) ---------------------------------------------
+cyclones:
+  primary:
+    diameter_mm: 1300             # confirmed
+    vortex_finder_mm: 670         # confirmed (дотоод диаметр баталгаажуулна — TODO §3)
+    spigot_mm: 540                # confirmed
+    do_dc: 0.52                   # DM циклоны жишигт нийцнэ
+    du_dc: 0.42
+    liner_material: "alumina"     # confirmed
+    liner_thickness_mm: 25
+    cone_angle_deg: 20
+  secondary:
+    diameter_mm: 1000
+    vortex_finder_mm: 535
+    spigot_mm: 400
+    do_dc: 0.535
+    du_dc: 0.40
+    liner_material: "alumina"
+    liner_thickness_mm: 25
+    cone_angle_deg: 20
+
+# --- Орчны нягт ба ажиллах хязгаар (Doc 03 §6) -------------------------------
+# ЧУХАЛ: SP логик БОДИТ ажлын нягтыг ашиглана (design 1.5-ыг биш).
+medium_density:
+  primary:
+    working_min: null             # TODO §6 (Duk: ~1.30)
+    working_max: null             # TODO §6 (Duk: ~1.36)
+    typical: 1.33                 # Duk-ийн дурдсан ажлын утга (баталгаажуулна)
+  secondary:
+    working_min: null             # TODO §6 (Duk: ~1.48)
+    working_max: null             # TODO §6 (Duk: ~1.55)
+    typical: 1.52
+  design_medium_rd: 1.5           # design — §4 масс балансын тоо (бодит биш)
+  measurement_method: null        # TODO §6 — γ-gauge / U-tube / dP
+
+# --- Магнетит (Doc 03 §7) ----------------------------------------------------
+magnetite:
+  grind_p90_um: 45                # confirmed: -45µm 90%+
+  consumption_g_per_t: 600        # confirmed (тогтмол дундаж эсэхийг VERIFY §7)
+  magnetic_content_pct: null      # TODO §7
+  supplier: null                  # TODO §7
+  price_usd_per_t: null           # TODO §7
+
+# --- Орчны recovery (Doc 03 §8) ----------------------------------------------
+medium_recovery:
+  magnetic_separators: null       # TODO §8 — тоо/хэмжээ
+  density_tank_makeup: "manual"   # Duk: гар (усан буугаар) — баталгаажуулна
+
+# --- Насос (Doc 03 §9) — ЭГЗЭГТЭЙ: VFD эсэх нь SP логикийг тодорхойлно --------
+pumps:
+  primary:
+    model: null                   # TODO §9
+    motor_kw: null                # TODO §9
+    has_vfd: null                 # TODO §9 — ЭГЗЭГТЭЙ
+    rpm_min: null                 # TODO §9
+    rpm_max: null                 # TODO §9
+  secondary:
+    model: null
+    motor_kw: null
+    has_vfd: null                 # ЭГЗЭГТЭЙ
+    rpm_min: null
+    rpm_max: null
+
+# --- Ширхэглэлийн хүрээ (Doc 03 §5) ------------------------------------------
+size_range:
+  dmc_feed_mm: [1.2, 50]          # confirmed
+  below_1_2mm: "TBS (-1.2+0.25) + флотаци (-0.25)"
+  above_50mm_pct_limit: 5
+
+# --- PLC холболт ба tag (Doc 03 §10) — Data Spec-ийн суурь -------------------
+plc:
+  brand: null                     # TODO §10
+  opc_ua_available: null          # TODO §10
+  # tag нэрс ирмэгц бөглөнө. signal: хэмжигддэг эсэх, tag: PLC нэр
+  tags:
+    medium_density_primary:    { measured: null, tag: null }
+    medium_density_secondary:  { measured: null, tag: null }
+    cyclone_pressure_primary:  { measured: null, tag: null }
+    cyclone_pressure_secondary: { measured: null, tag: null }
+    feed_flow:                 { measured: null, tag: null }
+    pump_speed_vfd_primary:    { measured: null, tag: null }
+    pump_speed_vfd_secondary:  { measured: null, tag: null }
+    pump_motor_current:        { measured: null, tag: null }
+    sump_level:                { measured: null, tag: null }
+    mag_separator_current:     { measured: null, tag: null }
+    feed_belt_weigher_tph:     { measured: null, tag: null }
+    online_ash_analyzer:       { measured: null, tag: null }
+    makeup_water_flow:         { measured: null, tag: null }
+
+# --- Бүтээгдэхүүний зорилт (Doc 03 §11) — engine-ийн target оролт ------------
+product_targets:
+  coking:
+    target_ash_pct: null          # TODO §11 (жишиг HCC 8.0-10.5)
+    other_spec: null              # TODO §11 — VM, CSN, чийг, хүхэр
+    contract: null                # TODO §11
+  thermal:
+    target_ash_pct: null          # TODO §11
+    calorific_value: null         # TODO §11 — ккал/кг GAR
+    other_spec: null
+    contract: null
+
+# --- Тоног төхөөрөмжийн элэгдлийн baseline (Doc 03 §13) ----------------------
+# Сэлбэгийн сануулга (Tier 2)-ийн threshold болно.
+wear_baseline_hours:
+  vortex_finder: null             # TODO §13 (жишиг alumina 8000-15000)
+  spigot: null                    # TODO §13 (жишиг alumina 6000-12000)
+  pump_impeller: null             # TODO §13 (жишиг 2000-6000)
+  cone_liner: null                # TODO §13 (жишиг 10000-25000)
+
+# --- Ажиллах горим (Doc 03 §14) ----------------------------------------------
+operating_mode: "ash-priority"    # confirmed — зорилтот ash тогтмол, yield максимумчилна
+
+# --- Engine-ийн тохиргоо -----------------------------------------------------
+engine:
+  ngm_window: 0.10                # ±0.1 g/cm³ NDM цонх (Doc 02 §5.3)
+  ngm_warn_threshold_pct: 25      # NGM > 25% → ялгалт хүндэрсэн анхааруулга
