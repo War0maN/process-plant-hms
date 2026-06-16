@@ -66,32 +66,50 @@ medium_density:
     working_max: null             # TODO §6 (Duk: ~1.55)
     typical: 1.52
   design_medium_rd: 1.5           # design — §4 масс балансын тоо (бодит биш)
-  measurement_method: null        # TODO §6 — γ-gauge / U-tube / dP
+  measurement_method: null        # TODO §6 — насосны гаралт дээр (ТЭЗҮ х.83); арга тодруулна
 
-# --- Магнетит (Doc 03 §7) ----------------------------------------------------
+# --- Хагалах нягт d50 (ТЭЗҮ-ээс — Doc 06) -----------------------------------
+# Орчны нягтаас ӨӨР: d50 = орчны нягт + (0.05-0.10). Engine зорилт болно.
+cut_density:
+  coking_d50_design: [1.40, 1.45]   # source: FS-design — коксжих хязгаар
+  thermal_d50_design: 1.80          # source: FS-design — хоёрдогч захын агуулга
+
+# --- Магнетит (Doc 03 §7) — ТЭЗҮ-ээс бараг бүрэн ----------------------------
 magnetite:
   grind_p90_um: 45                # confirmed: -45µm 90%+
-  consumption_g_per_t: 600        # confirmed (тогтмол дундаж эсэхийг VERIFY §7)
-  magnetic_content_pct: null      # TODO §7
-  supplier: null                  # TODO §7
-  price_usd_per_t: null           # TODO §7
+  grind_p98_um: 56                # source: FS — 98% < 56µm
+  consumption_g_per_t: 600        # confirmed (ТЭЗҮ-тэй таарна)
+  magnetic_content_pct: 97        # source: FS — 70mT-д >97%
+  solid_density_t_m3: 4.9         # source: FS — >4.9 т/м³
+  supplier: null                  # TODO §7 — ТЭЗҮ-нд алга
+  price_usd_per_t: null           # TODO §7 — ТЭЗҮ-нд алга
 
-# --- Орчны recovery (Doc 03 §8) ----------------------------------------------
+# --- Орчны recovery (Doc 03 §8) — ТЭЗҮ-ээс -----------------------------------
 medium_recovery:
-  magnetic_separators: null       # TODO §8 — тоо/хэмжээ
-  density_tank_makeup: "manual"   # Duk: гар (усан буугаар) — баталгаажуулна
+  magnetic_separators:            # source: FS — MS-401/402
+    count: 2
+    model: "Eriez Climaxx"
+    drum_dia_mm: 1200
+    drum_length_mm: 2700
+    capacity_m3h: 300
+    motor_kw: 11
+  density_tank_makeup: "manual"   # ТЭЗҮ х.83 — гар (усан буугаар) баталгаажсан
+  density_control: "water-injection-at-pump-discharge"  # ТЭЗҮ х.83
 
 # --- Насос (Doc 03 §9) — ЭГЗЭГТЭЙ: VFD эсэх нь SP логикийг тодорхойлно --------
+# ТЭЗҮ: үйлдвэрт VSD сүлжээ БАЙНА (х.112-122). Гэхдээ ХСЦ feed pump өөрөө
+# VSD-тэй эсэх + нягтыг усаар хянадаг тул "pump speed = SP" гэдгийг баталгаажуулна.
 pumps:
+  plant_has_vsd_network: true     # source: FS х.122
   primary:
-    model: null                   # TODO §9
-    motor_kw: null                # TODO §9
-    has_vfd: null                 # TODO §9 — ЭГЗЭГТЭЙ
+    model: "Krebs MMD (магадгүй 16x14x39)"  # source: FS х.177 — баталгаажуулна
+    motor_kw: 500                 # source: FS-design
+    has_vfd: null                 # TODO §9 — ЭГЗЭГТЭЙ: ХСЦ feed pump эцэслэн тодруулах
     rpm_min: null                 # TODO §9
     rpm_max: null                 # TODO §9
   secondary:
-    model: null
-    motor_kw: null
+    model: "Krebs MMD (магадгүй 14x12x36)"  # source: FS х.177
+    motor_kw: 450                 # source: FS-design
     has_vfd: null                 # ЭГЗЭГТЭЙ
     rpm_min: null
     rpm_max: null
@@ -123,16 +141,22 @@ plc:
     makeup_water_flow:         { measured: null, tag: null }
 
 # --- Бүтээгдэхүүний зорилт (Doc 03 §11) — engine-ийн target оролт ------------
+# ТЭЗҮ дизайны утга (1.40 хагалах нягтад, давхаргаас хамаарна). Бодит зорилтот
+# ash-ыг оператор гараар оруулна; гэрээний бүтэц нь ажиллагааны өгөгдөл.
 product_targets:
   coking:
-    target_ash_pct: null          # TODO §11 (жишиг HCC 8.0-10.5)
-    other_spec: null              # TODO §11 — VM, CSN, чийг, хүхэр
-    contract: null                # TODO §11
+    target_ash_pct: null          # TODO §11 — бодит зорилт (ТЭЗҮ design: ~9-10.5%)
+    design_ash_range_pct: [7.2, 12.6]  # source: FS — давхарга бүрээр
+    design_csn_range: [1, 8.5]    # source: FS
+    other_spec: null              # TODO §11 — VM, чийг, хүхэр, фосфор (ТЭЗҮ-нд бий)
+    contract: null                # TODO §11 — ажиллагааны өгөгдөл
   thermal:
     target_ash_pct: null          # TODO §11
-    calorific_value: null         # TODO §11 — ккал/кг GAR
+    design_ash_range_pct: [12.6, 29.7]  # source: FS
+    calorific_value: null         # TODO §11 — бодит зорилт
+    design_cv_kcal_kg: [5525, 7410]     # source: FS — давхарга бүрээр
     other_spec: null
-    contract: null
+    contract: null                # TODO §11
 
 # --- Тоног төхөөрөмжийн элэгдлийн baseline (Doc 03 §13) ----------------------
 # Сэлбэгийн сануулга (Tier 2)-ийн threshold болно.
