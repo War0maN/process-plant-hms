@@ -18,20 +18,27 @@ def test_confirmed_fields_present():
     assert cfg["operating_mode"] == "ash-priority"
 
 
-def test_critical_fields_currently_missing():
-    """Дата ороогүй тул бүх эгзэгтэй талбар дутуу — engine хараахан бэлэн биш."""
+def test_config_is_now_engine_ready():
+    """Инженерийн өгөгдөл орсон тул бүх эгзэгтэй талбар бөглөгдсөн — engine бэлэн."""
     cfg = config.load_config(CFG_PATH)
+    assert config.is_engine_ready(cfg), config.missing_critical(cfg)
+
+
+def test_confirmed_operating_values():
+    """Инженерийн баталгаажуулсан гол утгууд config-д орсон эсэх."""
+    cfg = config.load_config(CFG_PATH)
+    assert cfg["medium_density"]["primary"]["typical"] == 1.38
+    assert cfg["plc"]["brand"] == "Allen-Bradley ControlLogix 5570"
+    assert cfg["plc"]["opc_ua_available"] is True
+    assert cfg["pumps"]["primary"]["has_vfd"] is True
+    assert cfg["product_targets"]["coking"]["target_ash_pct"] == 10.5
+    assert cfg["product_targets"]["coking"]["contract"]["penalty_threshold_pct"] == 10.5
+    # online ash analyzer байгаа нь батлагдсан — real-time proxy
+    assert cfg["plc"]["tags"]["online_ash_analyzer"]["measured"] is True
+
+
+def test_missing_when_critical_nulled():
+    """Эгзэгтэй талбарыг null болговол readiness буурахыг батлах (логик шалгалт)."""
+    cfg = config.load_config(CFG_PATH)
+    cfg["plc"]["brand"] = None
     assert not config.is_engine_ready(cfg)
-    assert len(config.missing_critical(cfg)) == len(config.CRITICAL_FIELDS)
-
-
-def test_filled_config_becomes_ready():
-    """Эгзэгтэй талбаруудыг бөглөвөл engine бэлэн болохыг батлах."""
-    cfg = config.load_config(CFG_PATH)
-    for path, _ in config.CRITICAL_FIELDS:
-        cur = cfg
-        parts = path.split(".")
-        for p in parts[:-1]:
-            cur = cur[p]
-        cur[parts[-1]] = "filled"
-    assert config.is_engine_ready(cfg)

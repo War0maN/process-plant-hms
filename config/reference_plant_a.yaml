@@ -9,7 +9,10 @@
 #   design    — зураг төслийн (nameplate) тоо, бодит ажлын утга биш
 #   TODO      — инженерээс хүлээж буй (docs/05-plant-data-request-тай тулгана)
 #
-# Маргааш инженерийн xlsx хариу ирмэгц TODO талбаруудыг бөглөнө.
+# Төлөв (2026-06-16): Инженерийн хариу + Sedgman ТЭЗҮ нэгтгэгдсэн.
+# ✅ Бүх эгзэгтэй (critical) талбар бөглөгдсөн — engine бэлэн.
+# Үлдсэн TODO: pump rpm хүрээ, secondary-талын зарим tag, магнетит нийлүүлэгч,
+# мөн engine ажиллуулахад #1 хэрэгтэй: seam бүрийн washability raw хүснэгт.
 # =============================================================================
 
 plant:
@@ -58,15 +61,15 @@ cyclones:
 # ЧУХАЛ: SP логик БОДИТ ажлын нягтыг ашиглана (design 1.5-ыг биш).
 medium_density:
   primary:
-    working_min: null             # TODO §6 (Duk: ~1.30)
-    working_max: null             # TODO §6 (Duk: ~1.36)
-    typical: 1.33                 # Duk-ийн дурдсан ажлын утга (баталгаажуулна)
+    working_min: 1.32             # confirmed (инженер)
+    working_max: 1.42             # confirmed
+    typical: 1.38                 # confirmed
   secondary:
-    working_min: null             # TODO §6 (Duk: ~1.48)
-    working_max: null             # TODO §6 (Duk: ~1.55)
-    typical: 1.52
+    working_min: 1.45             # confirmed
+    working_max: 1.55             # confirmed
+    typical: 1.50                 # confirmed
   design_medium_rd: 1.5           # design — §4 масс балансын тоо (бодит биш)
-  measurement_method: null        # TODO §6 — насосны гаралт дээр (ТЭЗҮ х.83); арга тодруулна
+  measurement_method: "Endress+Hauser Gammapilot (gamma/nuclear), насосны гаралт дээр"  # confirmed
 
 # --- Хагалах нягт d50 (ТЭЗҮ-ээс — Doc 06) -----------------------------------
 # Орчны нягтаас ӨӨР: d50 = орчны нягт + (0.05-0.10). Engine зорилт болно.
@@ -81,8 +84,8 @@ magnetite:
   consumption_g_per_t: 600        # confirmed (ТЭЗҮ-тэй таарна)
   magnetic_content_pct: 97        # source: FS — 70mT-д >97%
   solid_density_t_m3: 4.9         # source: FS — >4.9 т/м³
-  supplier: null                  # TODO §7 — ТЭЗҮ-нд алга
-  price_usd_per_t: null           # TODO §7 — ТЭЗҮ-нд алга
+  supplier: null                  # TODO §7 — нийлүүлэгч нэр хэвээр дутуу
+  price_usd_per_t: [110, 130]     # confirmed (инженер) — хүргэгдсэн
 
 # --- Орчны recovery (Doc 03 §8) — ТЭЗҮ-ээс -----------------------------------
 medium_recovery:
@@ -96,23 +99,23 @@ medium_recovery:
   density_tank_makeup: "manual"   # ТЭЗҮ х.83 — гар (усан буугаар) баталгаажсан
   density_control: "water-injection-at-pump-discharge"  # ТЭЗҮ х.83
 
-# --- Насос (Doc 03 §9) — ЭГЗЭГТЭЙ: VFD эсэх нь SP логикийг тодорхойлно --------
-# ТЭЗҮ: үйлдвэрт VSD сүлжээ БАЙНА (х.112-122). Гэхдээ ХСЦ feed pump өөрөө
-# VSD-тэй эсэх + нягтыг усаар хянадаг тул "pump speed = SP" гэдгийг баталгаажуулна.
+# --- Насос (Doc 03 §9) -------------------------------------------------------
+# VSD сүлжээ бий + SIT_104_PumpSpeed tag байгаа тул pump speed нь хэмжигддэг,
+# удирдаж болох SP хувьсагч мөн (has_vfd: true). rpm хүрээ дутуу хэвээр.
 pumps:
-  plant_has_vsd_network: true     # source: FS х.122
+  plant_has_vsd_network: true     # confirmed
   primary:
-    model: "Krebs MMD (магадгүй 16x14x39)"  # source: FS х.177 — баталгаажуулна
-    motor_kw: 500                 # source: FS-design
-    has_vfd: null                 # TODO §9 — ЭГЗЭГТЭЙ: ХСЦ feed pump эцэслэн тодруулах
-    rpm_min: null                 # TODO §9
+    model: "Krebs 500кВт (FS: 16x14x39 MMD)"  # confirmed (мотор), загвар FS
+    motor_kw: 500                 # confirmed
+    has_vfd: true                 # confirmed (VSD сүлжээ + SIT_104_PumpSpeed tag)
+    rpm_min: null                 # TODO §9 — ажлын rpm хүрээ дутуу
     rpm_max: null                 # TODO §9
   secondary:
-    model: "Krebs MMD (магадгүй 14x12x36)"  # source: FS х.177
-    motor_kw: 450                 # source: FS-design
-    has_vfd: null                 # ЭГЗЭГТЭЙ
-    rpm_min: null
-    rpm_max: null
+    model: "Krebs 450кВт (FS: 14x12x36 MMD)"  # confirmed (мотор)
+    motor_kw: 450                 # confirmed
+    has_vfd: true                 # confirmed
+    rpm_min: null                 # TODO §9
+    rpm_max: null                 # TODO §9
 
 # --- Ширхэглэлийн хүрээ (Doc 03 §5) ------------------------------------------
 size_range:
@@ -122,49 +125,53 @@ size_range:
 
 # --- PLC холболт ба tag (Doc 03 §10) — Data Spec-ийн суурь -------------------
 plc:
-  brand: null                     # TODO §10
-  opc_ua_available: null          # TODO §10
-  # tag нэрс ирмэгц бөглөнө. signal: хэмжигддэг эсэх, tag: PLC нэр
+  brand: "Allen-Bradley ControlLogix 5570"  # confirmed
+  opc_ua_available: true          # confirmed — OPC UA бий, унших боломжтой
+  # confirmed tag-ууд (инженер). Дутуу tag-ийг "TODO" гэж тэмдэглэв.
   tags:
-    medium_density_primary:    { measured: null, tag: null }
-    medium_density_secondary:  { measured: null, tag: null }
-    cyclone_pressure_primary:  { measured: null, tag: null }
-    cyclone_pressure_secondary: { measured: null, tag: null }
-    feed_flow:                 { measured: null, tag: null }
-    pump_speed_vfd_primary:    { measured: null, tag: null }
-    pump_speed_vfd_secondary:  { measured: null, tag: null }
-    pump_motor_current:        { measured: null, tag: null }
-    sump_level:                { measured: null, tag: null }
-    mag_separator_current:     { measured: null, tag: null }
-    feed_belt_weigher_tph:     { measured: null, tag: null }
-    online_ash_analyzer:       { measured: null, tag: null }
-    makeup_water_flow:         { measured: null, tag: null }
+    medium_density_primary:    { measured: true, tag: "DIT_103_PrimaryDensity" }
+    medium_density_secondary:  { measured: null, tag: null }   # TODO — secondary нягтын tag
+    cyclone_pressure_primary:  { measured: true, tag: "PIT_102_CyclonePressure" }
+    cyclone_pressure_secondary: { measured: null, tag: null }  # TODO
+    feed_flow:                 { measured: true, tag: "FIT_101_MediaFlow" }  # хүнд орчны зарцуулалт
+    pump_speed_vfd_primary:    { measured: true, tag: "SIT_104_PumpSpeed" }
+    pump_speed_vfd_secondary:  { measured: null, tag: null }   # TODO
+    pump_motor_current:        { measured: null, tag: null }   # TODO
+    sump_level:                { measured: null, tag: null }   # TODO
+    mag_separator_current:     { measured: null, tag: null }   # TODO
+    feed_belt_weigher_tph:     { measured: null, tag: null }   # TODO
+    online_ash_analyzer:       { measured: true, tag: "AIT_105_OnlineAsh" }  # ⭐ туузан дээрх онлайн үнс
+    makeup_water_flow:         { measured: null, tag: null }   # TODO
 
 # --- Бүтээгдэхүүний зорилт (Doc 03 §11) — engine-ийн target оролт ------------
 # ТЭЗҮ дизайны утга (1.40 хагалах нягтад, давхаргаас хамаарна). Бодит зорилтот
 # ash-ыг оператор гараар оруулна; гэрээний бүтэц нь ажиллагааны өгөгдөл.
 product_targets:
   coking:
-    target_ash_pct: null          # TODO §11 — бодит зорилт (ТЭЗҮ design: ~9-10.5%)
+    target_ash_pct: 10.5          # confirmed — зорилтот үнс
     design_ash_range_pct: [7.2, 12.6]  # source: FS — давхарга бүрээр
     design_csn_range: [1, 8.5]    # source: FS
     other_spec: null              # TODO §11 — VM, чийг, хүхэр, фосфор (ТЭЗҮ-нд бий)
-    contract: null                # TODO §11 — ажиллагааны өгөгдөл
+    contract:                     # confirmed — гэрээний бүтэц
+      base_ash_pct: 10.0          # үндсэн үнслэг
+      penalty_threshold_pct: 10.5 # >10.5% → торгууль
+      penalty_usd_per_t: 1.5      # $/т
+      rejection_threshold_pct: 11.5  # >11.5% → татгалзах эрхтэй
   thermal:
-    target_ash_pct: null          # TODO §11
+    target_ash_pct: 17.0          # confirmed
     design_ash_range_pct: [12.6, 29.7]  # source: FS
-    calorific_value: null         # TODO §11 — бодит зорилт
+    calorific_value: null         # илчлэгээр биш, үнслэгээр зорьдог
     design_cv_kcal_kg: [5525, 7410]     # source: FS — давхарга бүрээр
     other_spec: null
     contract: null                # TODO §11
 
-# --- Тоног төхөөрөмжийн элэгдлийн baseline (Doc 03 §13) ----------------------
+# --- Тоног төхөөрөмжийн элэгдлийн baseline (Doc 03 §13) — confirmed ----------
 # Сэлбэгийн сануулга (Tier 2)-ийн threshold болно.
 wear_baseline_hours:
-  vortex_finder: null             # TODO §13 (жишиг alumina 8000-15000)
-  spigot: null                    # TODO §13 (жишиг alumina 6000-12000)
-  pump_impeller: null             # TODO §13 (жишиг 2000-6000)
-  cone_liner: null                # TODO §13 (жишиг 10000-25000)
+  vortex_finder: [4000, 6000]     # confirmed (нүүрсний хатуулгаас хамаарна)
+  spigot: [4000, 6000]            # confirmed (vortex finder-тэй хамт өгсөн)
+  pump_impeller: [3000, 4500]     # confirmed
+  cone_liner: [12000, 15000]      # confirmed (alumina ceramic)
 
 # --- Ажиллах горим (Doc 03 §14) ----------------------------------------------
 operating_mode: "ash-priority"    # confirmed — зорилтот ash тогтмол, yield максимумчилна
