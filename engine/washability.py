@@ -228,11 +228,84 @@ def yield_at(fr: list[Fraction], d: float) -> float:
     return m / tm * 100 if tm else 0.0
 
 
-def ngm_at(fr: list[Fraction], d: float, w: float) -> float:
-    """d ± w мужид багтах материалын хувь — NDM (Doc 02 §5.3)."""
+def ngm_at(fr: list[Fraction], d: float, half_width: float = 0.10) -> float:
+    """
+    Near-gravity material (NGM/NDM): d ± half_width мужид багтах массын хувь.
+
+    half_width нь НЭГ ТАЛЫН өргөн (цонхны нийт өргөн = 2 × half_width):
+      - 0.10 → ±0.10 (нийт 0.20). Олон улсын сурах бичиг ба Bird-ийн
+        хүндрэлийн жишгийн (0-7-10-15-25%) суурь. Doc 02 §5.3.
+      - 0.05 → ±0.05 (нийт 0.10). ISO 923 "narrow band"; зарим лабын worksheet
+        (жишээ нь Ухаа Худагийн Book2) энэ конвенцоор бодсон байдаг.
+
+    ⚠ Хоёр конвенц ~2 дахин өөр тоо өгнө — хүндрэлийн босготой ИЖИЛ конвенц
+    ашиглах ёстой. _mass_within жигд бус биний интерполяцийг хийдэг тул
+    бин нь цонхноос өргөн байсан ч нарийн бодогдоно.
+    """
     tm, _ = _totals(fr)
-    m = sum(_mass_within(f, d - w, d + w) for f in fr)
+    m = sum(_mass_within(f, d - half_width, d + half_width) for f in fr)
     return m / tm * 100 if tm else 0.0
+
+
+def to_dry_basis(ash_ad: float, moisture_ad: float) -> float:
+    """
+    Үнслэгийг агаар-хуурай (ad) төлвөөс абсолют хуурай (d) төлөвт хөрвүүлэх.
+
+    Ash_d = Ash_ad / (1 - M_ad/100)   (ISO 1170)
+
+    Чийг хасагдах тул үнс ӨСНӨ (буурахгүй). Жишээ: 11.45% @ 0.80% чийг → 11.54%.
+    """
+    return ash_ad / (1 - moisture_ad / 100.0)
+
+
+def mid_rd(f: Fraction) -> float:
+    """Фракцын дундаж нягт (нээлттэй хязгаарыг нэрлэснээр орлуулна)."""
+    return _mid(f)
+
+
+def inv_rd(f: Fraction) -> float:
+    """1/RD — Elementary Ash Curve-ийн X тэнхлэгийн координат (шугаманчлал)."""
+    m = _mid(f)
+    return 1.0 / m if m else 0.0
+
+
+def washability_worksheet(fr: list[Fraction], ndm_half_width: float = 0.10) -> list[dict]:
+    """
+    Стандарт фракцын шинжилгээний (Henry-Reinhard) worksheet гаргах.
+
+    Багана бүр Book2-ын composite хүснэгтийг давтана:
+      rd_lo, rd_hi, mid_rd, inv_rd, mass, ash, q_of_mass,
+      cum_float_mass, cum_float_ash, cum_sink_mass, cum_sink_ash, ngm
+
+    cum_float = тухайн фракц ба түүнээс хөнгөн (дээрээс доош);
+    cum_sink  = тухайн фракц ба түүнээс хүнд (доороос дээш);
+    ngm       = тухайн фракцын дээд хязгаар (cut) дээрх d ± ndm_half_width масс.
+    """
+    tm, t_an = _totals(fr)
+    rows = []
+    for f in fr:
+        if f.mass is None:
+            continue
+        lo, hi = _eff(f)
+        fmass, fan = _clean_mass_ash(fr, hi)          # энэ фракц + хөнгөн
+        below_lo_m, below_lo_an = _clean_mass_ash(fr, lo)
+        smass = tm - below_lo_m                        # энэ фракц + хүнд
+        san = t_an - below_lo_an
+        rows.append({
+            "rd_lo": f.lo,
+            "rd_hi": f.hi,
+            "mid_rd": round(_mid(f), 4),
+            "inv_rd": round(inv_rd(f), 4),
+            "mass": round(f.mass, 3),
+            "ash": round(f.ash, 3) if f.ash is not None else None,
+            "q_of_mass": round(f.mass * f.ash, 2) if f.ash is not None else None,
+            "cum_float_mass": round(fmass, 3),
+            "cum_float_ash": round(fan / fmass, 3) if fmass else None,
+            "cum_sink_mass": round(smass, 3),
+            "cum_sink_ash": round(san / smass, 3) if smass else None,
+            "ngm": round(ngm_at(fr, hi, ndm_half_width), 3),
+        })
+    return rows
 
 
 # --------------------------------------------------------------------------

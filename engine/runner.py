@@ -80,7 +80,7 @@ def build_recommendation(
     target_thermal = _cfg(cfg, "product_targets.thermal.target_ash_pct", 24.0)
     sp_primary = _cfg(cfg, "medium_density.primary.typical", 1.38)
     sp_secondary = _cfg(cfg, "medium_density.secondary.typical", 1.50)
-    ngm_window = _cfg(cfg, "engine.ngm_window", 0.10)
+    ngm_window = _cfg(cfg, "engine.ngm_half_width", _cfg(cfg, "engine.ngm_window", 0.10))
     ngm_warn = _cfg(cfg, "engine.ngm_warn_threshold_pct", 25)
 
     result = _recommend(
