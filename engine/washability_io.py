@@ -301,13 +301,20 @@ def lab_floatsink_seam(path, sheet="Float sink"):
         ash_ad = _num(ws.cell(r, c_ash).value) if c_ash else None
         im = _num(ws.cell(r, c_im).value) if c_im else None
         ash = to_dry_basis(ash_ad, im) if (ash_ad is not None and im is not None) else ash_ad
+
+        def _dry(col):
+            v = _num(ws.cell(r, col).value) if col else None
+            if v is None:
+                return None
+            return to_dry_basis(v, im) if im is not None else v
+
         quals = {}
-        if c_vol and _num(ws.cell(r, c_vol).value) is not None:
-            quals["vol"] = _num(ws.cell(r, c_vol).value)
-        if c_s and _num(ws.cell(r, c_s).value) is not None:
-            quals["sulphur"] = _num(ws.cell(r, c_s).value)
+        if _dry(c_vol) is not None:
+            quals["vol"] = _dry(c_vol)          # VM_d (dry суурь)
+        if _dry(c_s) is not None:
+            quals["sulphur"] = _dry(c_s)        # S_d (dry суурь)
         if c_csn and _num(ws.cell(r, c_csn).value) is not None:
-            quals["csn"] = _num(ws.cell(r, c_csn).value)
+            quals["csn"] = _num(ws.cell(r, c_csn).value)  # хэмжээгүй — хөрвүүлэхгүй
         recs.append((hi, mass, ash, quals or None))
     tot = sum(m for _, m, _, _ in recs) or 1.0
     return _grid_map([(hi, m / tot * 100, a, q) for hi, m, a, q in recs])

@@ -53,32 +53,34 @@ def main():
     print(f" БҮХ SEAM-ИЙН WASHABILITY ДҮГНЭЛТ ({len(seams)} давхрага)")
     print(f" Коксжих зорилт {TARGET_COKING}% үнс | NGM ±{NGM_HW}")
     print("═" * 74)
-    print(f" {'Seam':<6}{'Тэж.үнс%':>9}{'cut@10.5':>9}{'Гарц%':>7}{'NGM%':>6}"
-          f"{'S%':>6}{'CSN*':>6}  Үнэлгээ")
+    # Спек (dry): Sd<1, VMd<25, CSN>=7
+    SPEC = {"sulphur": {"max": 1.0}, "vol": {"max": 25.0}, "csn": {"min": 7.0}}
+    print(f" {'Seam':<6}{'Үнс%':>6}{'cut':>7}{'Гарц%':>7}{'NGM%':>6}"
+          f"{'Sd%':>6}{'VMd%':>6}{'CSN*':>6}  Спек(S/VM/CSN)")
     print("─" * 74)
     rows = []
     for code, fr in sorted(seams.items()):
-        ta = w.weighted_ash(fr)
         cut = w.cut_for_product_ash(fr, TARGET_COKING)
         y = w.yield_at(fr, cut)
         ngm = w.ngm_at(fr, cut, NGM_HW)
-        s = w.cum_float_quality(fr, cut, "sulphur") or 0
-        csn = w.cum_float_quality(fr, cut, "csn")
-        if y < 5:
-            verdict = "✗ коксжихгүй (үнс өндөр)"
-        elif y >= 40 and ngm < 35:
-            verdict = "✓ сайн коксжих"
-        elif y >= 25:
-            verdict = "• дунд (NGM хяна)"
-        else:
-            verdict = "△ сул"
-        rows.append((code, ta, cut, y, ngm, s, csn, verdict))
-        print(f" {code:<6}{ta:>9.1f}{cut:>9.3f}{y:>7.1f}{ngm:>6.1f}"
-              f"{s:>6.2f}{(csn or 0):>6.1f}  {verdict}")
+        chk = w.check_specs(fr, cut, SPEC)
+        s = chk["sulphur"]["value"] or 0
+        vm = chk["vol"]["value"] or 0
+        csn = chk["csn"]["value"]
+        def mk(q):
+            ok = chk[q]["ok"]
+            return "—" if ok is None else ("✓" if ok else "✗")
+        spec_str = f"{mk('sulphur')}/{mk('vol')}/{mk('csn')}"
+        rows.append((code, y, ngm, s, vm, csn, chk))
+        print(f" {code:<6}{w.weighted_ash(fr):>6.1f}{cut:>7.3f}{y:>7.1f}{ngm:>6.1f}"
+              f"{s:>6.2f}{vm:>6.1f}{(csn or 0):>6.1f}  {spec_str}")
     print("─" * 74)
-    good = [r for r in rows if r[3] >= 40]
-    print(f" Сайн коксжих ({len(good)}): {', '.join(r[0] for r in good)}")
-    print(" * CSN нь аддитив биш — зөвхөн лавлагаа (лаб баталгаажуулна)")
+    # бүрэн спекд тэнцэх (S<1 ба VM<25; CSN лавлагаа тул тусад нь)
+    pass_sv = [r for r in rows if r[6]["sulphur"]["ok"] and r[6]["vol"]["ok"] and r[1] >= 40]
+    print(f" Гарц≥40 + Sd<1 + VMd<25 ({len(pass_sv)}): "
+          f"{', '.join(r[0] for r in pass_sv) or '—'}")
+    print(" * CSN аддитив биш — массаар дунджилсан ойролцоо утга (лаб баталгаажуулна).")
+    print("   CSN>=7 нь нэг seam дээр ховор; blend/коксын зууханд эмпирик хянана.")
     print("═" * 74)
 
 

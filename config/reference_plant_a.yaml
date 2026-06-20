@@ -154,10 +154,10 @@ product_targets:
     # Хэрэглэгчийн спек — washability-аас давхар шалгана (аддитив: ash/vol/sulphur).
     # TODO: хэрэглэгчийн жинхэнэ хязгаарыг оруулна. csn = лавлагаа (аддитив биш).
     spec:
-      ash: { max: 10.5 }
-      sulphur: { max: null }      # TODO — хүхрийн дээд хязгаар
-      vol: { min: null, max: null }  # TODO — дэгдэмхийн хязгаар
-      csn: { min: null }          # лавлагаа (лаб баталгаажуулна)
+      ash: { max: 10.5 }          # үнс (dry)
+      sulphur: { max: 1.0 }       # Sd < 1.0% (аддитив)
+      vol: { max: 25.0 }          # VMd < 25% (аддитив)
+      csn: { min: 7.0 }           # CSN >= 7 (⚠ аддитив биш — лавлагаа)
     other_spec: null              # TODO §11 — фосфор, чийг (ТЭЗҮ-нд бий)
     contract:                     # confirmed — гэрээний бүтэц
       base_ash_pct: 10.0          # үндсэн үнслэг
