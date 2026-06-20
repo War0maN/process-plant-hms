@@ -106,3 +106,87 @@ def seams_from_csv(path: str | Path) -> dict[str, list[Fraction]]:
                 (row.get(c_hi), row.get(c_m), row.get(c_a))
             )
     return {seam: seam_from_rows(rows) for seam, rows in by_seam.items()}
+
+
+# --------------------------------------------------------------------------
+# ТҮҮХИЙ (raw) дата ачаалагч — ad үнс + чийг + граммаар жин
+# --------------------------------------------------------------------------
+def _num(v):
+    try:
+        return float(str(v).replace(",", ".").strip())
+    except (ValueError, AttributeError):
+        return None
+
+
+def _col_resolver(fieldnames):
+    cols = {str(c).lower().strip(): c for c in (fieldnames or []) if c is not None}
+
+    def col(*names):
+        for n in names:
+            if n in cols:
+                return cols[n]
+        return None
+
+    return col
+
+
+def seams_from_raw_rows(rows: list[dict], col) -> dict[str, list[Fraction]]:
+    """
+    Түүхий лабын мөрүүдээс seam бүрийн Fraction жагсаалт үүсгэх (Doc 07).
+
+      • жин граммаар бол seam дотор нийлбэрт хувааж % болгоно;
+      • ash_ad + чийг (moisture) бол to_dry_basis-аар d суурьт хөрвүүлнэ;
+      • density_hi-г DENS_HI торонд буулгана (бодит лабын ладдер тохирно).
+    """
+    from .washability import to_dry_basis
+
+    c_seam = col("seam", "давхрага", "seam_code")
+    c_hi = col("density_hi", "нягт_дээд", "density", "rd", "нягт")
+    c_mass = col("mass_g", "mass", "жин", "mass_pct", "жин_г")
+    c_ash = col("ash_ad", "ash_ad_pct", "үнс_ad", "ash", "үнс")
+    c_moist = col("moisture_ad", "moisture_ad_pct", "im", "чийг", "moisture")
+    c_dry = col("ash_dry", "ash_dry_pct", "үнс_dry")
+
+    by_seam: dict[str, list[tuple]] = {}
+    for row in rows:
+        seam = (str(row.get(c_seam)).strip() if c_seam and row.get(c_seam) else "")
+        if not seam:
+            continue
+        hi = row.get(c_hi) if c_hi else None
+        mass = _num(row.get(c_mass)) if c_mass else None
+        if hi is None or mass is None:
+            continue
+        ash = None
+        if c_dry and _num(row.get(c_dry)) is not None:
+            ash = _num(row.get(c_dry))
+        elif c_ash and _num(row.get(c_ash)) is not None:
+            ad = _num(row.get(c_ash))
+            m = _num(row.get(c_moist)) if c_moist else None
+            ash = to_dry_basis(ad, m) if m is not None else ad
+        by_seam.setdefault(seam, []).append((hi, mass, ash))
+
+    out = {}
+    for seam, recs in by_seam.items():
+        tot = sum(m for _, m, _ in recs) or 1.0
+        out[seam] = seam_from_rows([(hi, m / tot * 100, a) for hi, m, a in recs])
+    return out
+
+
+def seams_from_raw_csv(path: str | Path) -> dict[str, list[Fraction]]:
+    """Түүхий washability CSV (ad үнс + чийг + жин) ачаалах."""
+    with open(path, encoding="utf-8-sig") as fh:
+        reader = csv.DictReader(fh)
+        rows = list(reader)
+        return seams_from_raw_rows(rows, _col_resolver(reader.fieldnames))
+
+
+def seams_from_raw_xlsx(path: str | Path, sheet=None) -> dict[str, list[Fraction]]:
+    """Түүхий washability xlsx ачаалах (эхний мөр = толгой)."""
+    from openpyxl import load_workbook
+
+    wb = load_workbook(path, data_only=True)
+    ws = wb[sheet] if sheet else wb.worksheets[0]
+    data = list(ws.iter_rows(values_only=True))
+    header = [str(h).strip() if h is not None else "" for h in data[0]]
+    rows = [dict(zip(header, r)) for r in data[1:]]
+    return seams_from_raw_rows(rows, _col_resolver(header))

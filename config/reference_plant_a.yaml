@@ -158,7 +158,7 @@ product_targets:
       penalty_usd_per_t: 1.5      # $/т
       rejection_threshold_pct: 11.5  # >11.5% → татгалзах эрхтэй
   thermal:
-    target_ash_pct: 17.0          # confirmed
+    target_ash_pct: 22.5          # confirmed (шинэчилсэн 17.0 → 22.5)
     design_ash_range_pct: [12.6, 29.7]  # source: FS
     calorific_value: null         # илчлэгээр биш, үнслэгээр зорьдог
     design_cv_kcal_kg: [5525, 7410]     # source: FS — давхарга бүрээр
