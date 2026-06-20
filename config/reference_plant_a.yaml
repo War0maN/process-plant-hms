@@ -151,7 +151,14 @@ product_targets:
     target_ash_pct: 10.5          # confirmed — зорилтот үнс
     design_ash_range_pct: [7.2, 12.6]  # source: FS — давхарга бүрээр
     design_csn_range: [1, 8.5]    # source: FS
-    other_spec: null              # TODO §11 — VM, чийг, хүхэр, фосфор (ТЭЗҮ-нд бий)
+    # Хэрэглэгчийн спек — washability-аас давхар шалгана (аддитив: ash/vol/sulphur).
+    # TODO: хэрэглэгчийн жинхэнэ хязгаарыг оруулна. csn = лавлагаа (аддитив биш).
+    spec:
+      ash: { max: 10.5 }
+      sulphur: { max: null }      # TODO — хүхрийн дээд хязгаар
+      vol: { min: null, max: null }  # TODO — дэгдэмхийн хязгаар
+      csn: { min: null }          # лавлагаа (лаб баталгаажуулна)
+    other_spec: null              # TODO §11 — фосфор, чийг (ТЭЗҮ-нд бий)
     contract:                     # confirmed — гэрээний бүтэц
       base_ash_pct: 10.0          # үндсэн үнслэг
       penalty_threshold_pct: 10.5 # >10.5% → торгууль

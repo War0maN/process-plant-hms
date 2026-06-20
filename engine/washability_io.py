@@ -130,13 +130,54 @@ def _col_resolver(fieldnames):
     return col
 
 
+def _grid_map(records: list[tuple]) -> list[Fraction]:
+    """
+    [(hi, mass_pct, ash, quals_dict)] → DENS_HI торонд буулгасан Fraction жагсаалт.
+    Үнс ба бусад чанарыг массаар жигнэж нэгтгэнэ.
+    """
+    n = len(DENS_HI)
+    mass = [0.0] * n
+    ash_num = [0.0] * n
+    has_ash = [False] * n
+    qnum: dict[str, list[float]] = {}
+    qden: dict[str, list[float]] = {}
+    for hi_raw, m, a, q in records:
+        hi = _parse_density_hi(hi_raw)
+        if hi is None or m is None:
+            continue
+        key = 99.0 if hi >= 99 else hi
+        idx = next((i for i, h in enumerate(DENS_HI) if abs(h - key) < 1e-6), None)
+        if idx is None:
+            idx = next((i for i, h in enumerate(DENS_HI) if h >= key), n - 1)
+        mass[idx] += m
+        if a is not None:
+            ash_num[idx] += m * a
+            has_ash[idx] = True
+        for k, v in (q or {}).items():
+            if v is None:
+                continue
+            qnum.setdefault(k, [0.0] * n)[idx] += m * v
+            qden.setdefault(k, [0.0] * n)[idx] += m
+    ash = [(ash_num[i] / mass[i]) if (has_ash[i] and mass[i] > 0) else None for i in range(n)]
+    fr = grid_fractions(mass, ash)
+    for i, f in enumerate(fr):
+        quals = {}
+        for k in qnum:
+            if qden[k][i] > 0:
+                quals[k] = qnum[k][i] / qden[k][i]
+        f.quals = quals or None
+    return fr
+
+
 def seams_from_raw_rows(rows: list[dict], col) -> dict[str, list[Fraction]]:
     """
     Түүхий лабын мөрүүдээс seam бүрийн Fraction жагсаалт үүсгэх (Doc 07).
 
       • жин граммаар бол seam дотор нийлбэрт хувааж % болгоно;
       • ash_ad + чийг (moisture) бол to_dry_basis-аар d суурьт хөрвүүлнэ;
-      • density_hi-г DENS_HI торонд буулгана (бодит лабын ладдер тохирно).
+      • vol/sulphur/csn зэргийг quals болгож хадгална (аддитив = тооцоологдоно,
+        csn = аддитив биш, зөвхөн лавлагаа);
+      • density_hi-г DENS_HI торонд буулгана.
     """
     from .washability import to_dry_basis
 
@@ -146,6 +187,9 @@ def seams_from_raw_rows(rows: list[dict], col) -> dict[str, list[Fraction]]:
     c_ash = col("ash_ad", "ash_ad_pct", "үнс_ad", "ash", "үнс")
     c_moist = col("moisture_ad", "moisture_ad_pct", "im", "чийг", "moisture")
     c_dry = col("ash_dry", "ash_dry_pct", "үнс_dry")
+    c_vol = col("vol_ad", "vol", "дэгдэмхий", "vm")
+    c_s = col("sulphur_ad", "sulphur", "хүхэр", "s")
+    c_csn = col("csn", "хөөлт", "fsi")
 
     by_seam: dict[str, list[tuple]] = {}
     for row in rows:
@@ -163,12 +207,19 @@ def seams_from_raw_rows(rows: list[dict], col) -> dict[str, list[Fraction]]:
             ad = _num(row.get(c_ash))
             m = _num(row.get(c_moist)) if c_moist else None
             ash = to_dry_basis(ad, m) if m is not None else ad
-        by_seam.setdefault(seam, []).append((hi, mass, ash))
+        quals = {}
+        if c_vol and _num(row.get(c_vol)) is not None:
+            quals["vol"] = _num(row.get(c_vol))
+        if c_s and _num(row.get(c_s)) is not None:
+            quals["sulphur"] = _num(row.get(c_s))
+        if c_csn and _num(row.get(c_csn)) is not None:
+            quals["csn"] = _num(row.get(c_csn))
+        by_seam.setdefault(seam, []).append((hi, mass, ash, quals or None))
 
     out = {}
     for seam, recs in by_seam.items():
-        tot = sum(m for _, m, _ in recs) or 1.0
-        out[seam] = seam_from_rows([(hi, m / tot * 100, a) for hi, m, a in recs])
+        tot = sum(m for _, m, _, _ in recs) or 1.0
+        out[seam] = _grid_map([(hi, m / tot * 100, a, q) for hi, m, a, q in recs])
     return out
 
 

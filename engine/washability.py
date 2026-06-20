@@ -35,11 +35,17 @@ NOMINAL_HI = 2.50
 
 @dataclass
 class Fraction:
-    """Нягтын нэг фракц: [lo, hi) хязгаар, жингийн % (mass), үнс % (ash)."""
+    """Нягтын нэг фракц: [lo, hi) хязгаар, жингийн % (mass), үнс % (ash).
+
+    quals — нэмэлт чанарын үзүүлэлтүүд (vol, sulphur, csn г.м.). Аддитив (массаар
+    жигнэгддэг) үзүүлэлтийг cum_float_quality-аар бодно. CSN нь аддитив БИШ —
+    зөвхөн лавлагаа.
+    """
     lo: float
     hi: float
     mass: Optional[float] = None
     ash: Optional[float] = None
+    quals: Optional[dict] = None
 
 
 # --------------------------------------------------------------------------
@@ -256,6 +262,65 @@ def to_dry_basis(ash_ad: float, moisture_ad: float) -> float:
     Чийг хасагдах тул үнс ӨСНӨ (буурахгүй). Жишээ: 11.45% @ 0.80% чийг → 11.54%.
     """
     return ash_ad / (1 - moisture_ad / 100.0)
+
+
+# --------------------------------------------------------------------------
+# Нэмэлт чанарын үзүүлэлт (VM, S г.м.) — cumulative float жигнэсэн дундаж
+# --------------------------------------------------------------------------
+# Аддитив БИШ үзүүлэлтүүд — массаар дунджилж болохгүй (зөвхөн лавлагаа).
+NON_ADDITIVE_QUALS = {"csn", "fsi", "хөөлт"}
+
+
+def cum_float_quality(fr: list[Fraction], d: float, key: str) -> Optional[float]:
+    """
+    d дээр хагалсан баяжмалын (float<d) тухайн чанарын массаар жигнэсэн дундаж.
+
+    Үнс шиг аддитив үзүүлэлтэд (VM, Sulphur) хүчинтэй. CSN-д хэрэглэвэл ойролцоо
+    утга буцаах ч энэ нь зөв blend дүн БИШ (NON_ADDITIVE_QUALS-ийг үз).
+    """
+    num = den = 0.0
+    for f in fr:
+        if f.mass is None or not f.quals:
+            continue
+        v = f.quals.get(key)
+        if v is None:
+            continue
+        b = _fraction_below(f, d)
+        num += f.mass * b * v
+        den += f.mass * b
+    return num / den if den else None
+
+
+def product_qualities(fr: list[Fraction], cut: float, keys: list[str]) -> dict:
+    """Баяжмалын (float<cut) бүх хүссэн чанарыг нэг dict болгож буцаах."""
+    out = {"ash": clean_ash_at(fr, cut)}
+    for k in keys:
+        out[k] = cum_float_quality(fr, cut, k)
+    return out
+
+
+def check_specs(fr: list[Fraction], cut: float, specs: dict) -> dict:
+    """
+    Баяжмалыг хэрэглэгчийн спекийн эсрэг шалгах.
+
+    specs: {"ash": {"max": 10.5}, "sulphur": {"max": 0.8}, "vol": {"min": 20}, ...}
+    Буцаах: чанар тус бүрийн {value, limit, ok, additive}.
+    """
+    res = {}
+    keys = [k for k in specs if k != "ash"]
+    vals = product_qualities(fr, cut, keys)
+    for q, lim in specs.items():
+        v = vals.get(q)
+        additive = q.lower() not in NON_ADDITIVE_QUALS
+        ok = None
+        if v is not None:
+            ok = True
+            if "max" in lim and v > lim["max"]:
+                ok = False
+            if "min" in lim and v < lim["min"]:
+                ok = False
+        res[q] = {"value": v, "limit": lim, "ok": ok, "additive": additive}
+    return res
 
 
 def mid_rd(f: Fraction) -> float:
