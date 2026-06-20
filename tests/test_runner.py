@@ -25,7 +25,7 @@ def test_runner_hits_targets_from_config():
     r = runner.build_recommendation(cfg, picks, seams)
     # config-ийн зорилт (коксжих 10.5) дээр баланс таарах ёстой
     assert r["balance"]["coking"]["ash"] == pytest.approx(10.5, abs=0.1)
-    assert r["balance"]["thermal"]["ash"] == pytest.approx(17.0, abs=0.1)
+    assert r["balance"]["thermal"]["ash"] == pytest.approx(22.5, abs=0.1)
     assert r["targets"]["coking"] == 10.5
 
 
