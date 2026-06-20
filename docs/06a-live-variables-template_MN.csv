@@ -1,0 +1,9 @@
+﻿Үзүүлэлт,tag,Утга,Нэгж,Тэмдэглэл
+Орчны нягт Primary (одоогийн SP),DIT_103_PrimaryDensity,,g/cm³,gauge утга
+Орчны нягт Secondary,,,g/cm³,
+Циклон оролтын даралт,PIT_102_CyclonePressure,,kPa,
+Тэжээлийн урсгал,FIT_101_MediaFlow,,m³/h,
+Насосны хурд Primary,SIT_104_PumpSpeed,,% VFD,
+Насосны хурд Secondary,,,% VFD,
+Online ash (тэжээл),AIT_105_OnlineAsh,,% ad,ash-pin залруулгад
+Тэжээлийн blend (seam:%),,,,"ж: 3AU:60, 4C:40"

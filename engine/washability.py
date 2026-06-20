@@ -106,9 +106,12 @@ def blend_fractions(picks: list[dict], seams: dict[str, list[Fraction]]) -> list
     picks: [{"code": seam нэр, "ratio": хувь}, ...]
     seams: {seam нэр: [Fraction, ...]}
     """
+    n = len(DENS_HI)
     tot_ratio = sum(p.get("ratio", 0) or 0 for p in picks) or 1
-    acc_mass = [0.0] * len(DENS_HI)
-    acc_ash_num = [0.0] * len(DENS_HI)
+    acc_mass = [0.0] * n
+    acc_ash_num = [0.0] * n
+    qnum: dict[str, list[float]] = {}
+    qden: dict[str, list[float]] = {}
     for p in picks:
         s = seams.get(p["code"])
         if not s:
@@ -119,15 +122,22 @@ def blend_fractions(picks: list[dict], seams: dict[str, list[Fraction]]) -> list
             try:
                 idx = DENS_HI.index(key)
             except ValueError:
-                idx = next((i for i, h in enumerate(DENS_HI) if h >= key), len(DENS_HI) - 1)
+                idx = next((i for i, h in enumerate(DENS_HI) if h >= key), n - 1)
             if sf.mass is not None:
                 acc_mass[idx] += w * sf.mass
                 if sf.ash is not None:
                     acc_ash_num[idx] += w * sf.mass * sf.ash
-    fr = grid_fractions([0.0] * len(DENS_HI), [None] * len(DENS_HI))
+                for qk, qv in (sf.quals or {}).items():
+                    if qv is None:
+                        continue
+                    qnum.setdefault(qk, [0.0] * n)[idx] += w * sf.mass * qv
+                    qden.setdefault(qk, [0.0] * n)[idx] += w * sf.mass
+    fr = grid_fractions([0.0] * n, [None] * n)
     for i, f in enumerate(fr):
         f.mass = acc_mass[i]
         f.ash = (acc_ash_num[i] / acc_mass[i]) if acc_mass[i] > 0 else None
+        quals = {qk: qnum[qk][i] / qden[qk][i] for qk in qnum if qden[qk][i] > 0}
+        f.quals = quals or None
     return fr
 
 
@@ -190,7 +200,7 @@ def apply_tilt(fr: list[Fraction], k: float) -> list[Fraction]:
     out = []
     for i, f in enumerate(fr):
         new_mass = (w[i] / tot * 100) if tot else f.mass
-        out.append(Fraction(lo=f.lo, hi=f.hi, mass=new_mass, ash=f.ash))
+        out.append(Fraction(lo=f.lo, hi=f.hi, mass=new_mass, ash=f.ash, quals=f.quals))
     return out
 
 
