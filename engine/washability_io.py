@@ -241,3 +241,73 @@ def seams_from_raw_xlsx(path: str | Path, sheet=None) -> dict[str, list[Fraction
     header = [str(h).strip() if h is not None else "" for h in data[0]]
     rows = [dict(zip(header, r)) for r in data[1:]]
     return seams_from_raw_rows(rows, _col_resolver(header))
+
+
+# --------------------------------------------------------------------------
+# Стандарт лабын workbook ачаалагч (Ухаа Худаг формат)
+# Sheets: 'Float sink' (washability), 'Pretreatment' (ширхэглэл)
+# --------------------------------------------------------------------------
+def _find_header_row(ws, must_contain, limit=14):
+    for r in range(1, limit):
+        joined = " ".join(str(ws.cell(r, c).value or "") for c in range(1, ws.max_column + 1))
+        if all(k in joined for k in must_contain):
+            return r
+    return None
+
+
+def lab_floatsink_seam(path, sheet="Float sink"):
+    """
+    Стандарт лабын 'Float sink' хуудаснаас seam-ийн composite Fraction (Doc 07).
+
+    Хуудас дотор ОЛОН ширхэгийн блок (-50+16, -16+8, -8+2, -2+0.5, -0.5+0.25),
+    тус бүр өөрийн float-sink-тэй. Бүгдийг блокийн граммаар жигнэж нэг -50+0.25
+    DMC composite болгож нэгтгэнэ (Book2-ын composite-той тохирно).
+    """
+    from openpyxl import load_workbook
+    from .washability import to_dry_basis
+
+    wb = load_workbook(path, data_only=True)
+    ws = wb[sheet]
+    hdr = _find_header_row(ws, ["Ash", "Mass"]) or 8
+    sub = hdr + 1  # 'Sink/Float/gram' дэд толгой
+
+    def find_col(row, *keys):
+        for c in range(1, ws.max_column + 1):
+            v = str(ws.cell(row, c).value or "").strip().lower()
+            if any(k in v for k in keys):
+                return c
+        return None
+
+    c_lo = find_col(sub, "sink") or 5
+    c_hi = find_col(sub, "float") or 6
+    c_mass = find_col(sub, "gram") or 7
+    c_ash = find_col(hdr, "ash")
+    c_im = find_col(hdr, "im")
+    c_vol = find_col(hdr, "vol")
+    c_s = find_col(hdr, "sulphur")
+    c_csn = find_col(hdr, "csn")
+
+    # бүх ширхэгийн блокийг граммаар нэгтгэх (Total мөрүүдийг алгасна)
+    recs = []
+    for r in range(sub + 1, ws.max_row + 1):
+        b = str(ws.cell(r, 2).value or "").strip().lower()
+        if b.startswith("total") or "нийт" in b:
+            continue
+        lo = _num(ws.cell(r, c_lo).value) if c_lo else None
+        hi = _num(ws.cell(r, c_hi).value) if c_hi else None
+        mass = _num(ws.cell(r, c_mass).value) if c_mass else None
+        if hi is None or mass is None:
+            continue
+        ash_ad = _num(ws.cell(r, c_ash).value) if c_ash else None
+        im = _num(ws.cell(r, c_im).value) if c_im else None
+        ash = to_dry_basis(ash_ad, im) if (ash_ad is not None and im is not None) else ash_ad
+        quals = {}
+        if c_vol and _num(ws.cell(r, c_vol).value) is not None:
+            quals["vol"] = _num(ws.cell(r, c_vol).value)
+        if c_s and _num(ws.cell(r, c_s).value) is not None:
+            quals["sulphur"] = _num(ws.cell(r, c_s).value)
+        if c_csn and _num(ws.cell(r, c_csn).value) is not None:
+            quals["csn"] = _num(ws.cell(r, c_csn).value)
+        recs.append((hi, mass, ash, quals or None))
+    tot = sum(m for _, m, _, _ in recs) or 1.0
+    return _grid_map([(hi, m / tot * 100, a, q) for hi, m, a, q in recs])
