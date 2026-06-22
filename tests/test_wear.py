@@ -34,3 +34,22 @@ def test_fresh_equipment_no_alert_no_nudge():
 def test_nudge_bounded():
     we = assess_wear({"spigot": {"hours": 99999}}, BASE)
     assert we["pump_speed_nudge_pct"] <= 2.0
+
+
+def test_bore_wear_overdue():
+    from engine.wear import bore_wear
+    r = bore_wear(590, 540)  # spigot +9.3% (бодит Ухаа Худаг)
+    assert r["status"] == "overdue"
+    assert r["pump_speed_nudge_pct"] > 0
+
+
+def test_bore_wear_fresh_ok():
+    from engine.wear import bore_wear
+    r = bore_wear(545, 540)  # бараг шинэ
+    assert r["status"] == "ok"
+    assert r["pump_speed_nudge_pct"] >= 0
+
+
+def test_bore_wear_unknown():
+    from engine.wear import bore_wear
+    assert bore_wear(None, 540)["status"] == "unknown"

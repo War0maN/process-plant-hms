@@ -59,3 +59,32 @@ def assess_wear(measured: dict, baselines: dict) -> dict:
         if frac > (bmin / bmax):
             nudge = min(2.0, (frac - bmin / bmax) / (1 - bmin / bmax) * 2.0)
     return {"alerts": alerts, "pump_speed_nudge_pct": round(nudge, 2)}
+
+
+# --------------------------------------------------------------------------
+# Амсар-суурьтай элэгдэл (бодит DMC Inspection log — bore мм)
+# --------------------------------------------------------------------------
+def bore_wear(measured_mm: Optional[float], design_mm: float,
+              replace_enlargement_pct: float = 9.0) -> dict:
+    """
+    Амсрын диаметрийн элэгдлийг design-тай тулгаж үнэлэх.
+
+    Ухаа Худагийн лог: spigot design 540 → ~590 (≈+9%) дээр "солих" гэж тэмдэглэдэг.
+    Тиймээс enlargement ≥ replace_enlargement_pct бол "overdue".
+
+    Буцаах: {enlargement_pct, status, pump_speed_nudge_pct}
+    """
+    if measured_mm is None:
+        return {"enlargement_pct": None, "status": "unknown", "pump_speed_nudge_pct": 0.0}
+    enl = (measured_mm - design_mm) / design_mm * 100
+    if enl >= replace_enlargement_pct:
+        status = "overdue"
+    elif enl >= replace_enlargement_pct * 0.6:
+        status = "soon"
+    else:
+        status = "ok"
+    # spigot томрох тусам d50 буурна → даралт бариулахаар насосны хурд +
+    # (элэгдлийн хувьтай пропорциональ, дээд тал нь +2.5%)
+    nudge = max(0.0, min(2.5, enl / replace_enlargement_pct * 2.5)) if enl > 0 else 0.0
+    return {"enlargement_pct": round(enl, 1), "status": status,
+            "pump_speed_nudge_pct": round(nudge, 2)}
