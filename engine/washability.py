@@ -309,27 +309,41 @@ def product_qualities(fr: list[Fraction], cut: float, keys: list[str]) -> dict:
     return out
 
 
+def to_daf(value_d: float, ash_d: float) -> float:
+    """Хуурай (db) утгыг үнс-чийггүй (daf) суурьт хөрвүүлэх: v_daf = v_d/(1-Ash_d/100)."""
+    denom = 1 - ash_d / 100.0
+    return value_d / denom if denom > 0 else value_d
+
+
 def check_specs(fr: list[Fraction], cut: float, specs: dict) -> dict:
     """
-    Баяжмалыг хэрэглэгчийн спекийн эсрэг шалгах.
+    Баяжмалыг хэрэглэгчийн спекийн эсрэг шалгах (суурь-мэдрэгчтэй).
 
-    specs: {"ash": {"max": 10.5}, "sulphur": {"max": 0.8}, "vol": {"min": 20}, ...}
-    Буцаах: чанар тус бүрийн {value, limit, ok, additive}.
+    specs: {"ash": {"max": 11},                       # db
+            "sulphur": {"max": 0.65},                  # db
+            "vol": {"max": 27, "basis": "daf"},        # daf
+            "csn": {"min": 7}}                         # хэмжээгүй
+    Engine-ийн quals нь db суурьтай; basis="daf" бол тухайн утгыг daf болгоно.
+    Буцаах: чанар тус бүрийн {value, basis, limit, ok, additive}.
     """
     res = {}
+    ash_d = clean_ash_at(fr, cut)
     keys = [k for k in specs if k != "ash"]
     vals = product_qualities(fr, cut, keys)
     for q, lim in specs.items():
-        v = vals.get(q)
+        v = ash_d if q == "ash" else vals.get(q)
+        basis = (lim or {}).get("basis", "db")
+        if v is not None and basis == "daf" and ash_d is not None:
+            v = to_daf(v, ash_d)
         additive = q.lower() not in NON_ADDITIVE_QUALS
         ok = None
         if v is not None:
             ok = True
-            if "max" in lim and v > lim["max"]:
+            if lim.get("max") is not None and v > lim["max"]:
                 ok = False
-            if "min" in lim and v < lim["min"]:
+            if lim.get("min") is not None and v < lim["min"]:
                 ok = False
-        res[q] = {"value": v, "limit": lim, "ok": ok, "additive": additive}
+        res[q] = {"value": v, "basis": basis, "limit": lim, "ok": ok, "additive": additive}
     return res
 
 

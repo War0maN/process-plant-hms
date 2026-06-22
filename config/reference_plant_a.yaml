@@ -153,11 +153,13 @@ product_targets:
     design_csn_range: [1, 8.5]    # source: FS
     # Хэрэглэгчийн спек — washability-аас давхар шалгана (аддитив: ash/vol/sulphur).
     # TODO: хэрэглэгчийн жинхэнэ хязгаарыг оруулна. csn = лавлагаа (аддитив биш).
+    # Анхдагч (default) спек = UHG_MVHCC. Суурь: ash/sulphur = db, vol = daf.
+    # Бусад зэрэглэлийг доорх product_grades-аас сонгож болно.
     spec:
-      ash: { max: 10.5 }          # үнс (dry)
-      sulphur: { max: 1.0 }       # Sd < 1.0% (аддитив)
-      vol: { max: 25.0 }          # VMd < 25% (аддитив)
-      csn: { min: 7.0 }           # CSN >= 7 (⚠ аддитив биш — лавлагаа)
+      ash: { max: 11.0 }                # db (Product Target)
+      sulphur: { max: 0.65 }            # db
+      vol: { max: 27.0, basis: daf }    # ⚠ daf
+      csn: { min: 7.0 }                 # хэмжээгүй (аддитив биш — лавлагаа)
     other_spec: null              # TODO §11 — фосфор, чийг (ТЭЗҮ-нд бий)
     contract:                     # confirmed — гэрээний бүтэц
       base_ash_pct: 10.0          # үндсэн үнслэг
@@ -171,6 +173,21 @@ product_targets:
     design_cv_kcal_kg: [5525, 7410]     # source: FS — давхарга бүрээр
     other_spec: null
     contract: null                # TODO §11
+
+# --- Бүтээгдэхүүний зэрэглэлийн спек (Product Target.xlsx) ----------------------
+# Суурь: TM/Ash/S = db, V = daf, CSN/G = хэмжээгүй (аддитив биш). Q = ккал/кг (мэдээлэл).
+# Engine cut/blend-ийг сонгосон зэрэглэлийн ash(db)/sulphur(db)/vol(daf)-аар шалгана.
+product_grades:
+  UHG_MVHCC: { tm: 9, ash: 11.0,  vol_daf: 27, sulphur: 0.65, q: 7500, csn: 7, g: 75 }
+  UHG_HVHCC: { tm: 9, ash: 12.0,  vol_daf: 33, sulphur: 0.65, q: 7500, csn: 7, g: 75 }
+  BN_HVHCC:  { tm: 9, ash: 10.5,  vol_daf: 33, sulphur: 0.65, q: 6900, csn: 7, g: 80 }
+  HV_HCC:    { tm: 9, ash: 11.25, vol_daf: 33, sulphur: 0.65, q: 7200, csn: 7, g: 75 }
+  BN_SSCC:   { tm: 9, ash: 9.5,   vol_daf: 37, sulphur: 0.65, q: 6750, csn: 7, g: 60 }
+  BN_MVHCC:  { tm: 9, ash: 12.0,  vol_daf: 32, sulphur: 0.65, q: 6900, csn: 7, g: 80 }
+  SSCC:      { tm: 9, ash: 10.75, vol_daf: 34.5, sulphur: 0.65, q: 6825, csn: 7, g: 70 }
+  MASHCC_I:  { tm: 9, ash: 28.0,  vol_daf: 27, sulphur: 0.75, q: 5600, csn: 2, g: 20 }
+  MASHCC_II: { tm: 9, ash: 22.0,  vol_daf: 27, sulphur: 0.90, q: 5600, csn: 2, g: 20 }
+primary_grade: UHG_MVHCC      # анхдагч зорилтот зэрэглэл
 
 # --- Тоног төхөөрөмжийн элэгдлийн baseline (Doc 03 §13) — confirmed ----------
 # Сэлбэгийн сануулга (Tier 2)-ийн threshold болно.

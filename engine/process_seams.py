@@ -53,10 +53,11 @@ def main():
     print(f" БҮХ SEAM-ИЙН WASHABILITY ДҮГНЭЛТ ({len(seams)} давхрага)")
     print(f" Коксжих зорилт {TARGET_COKING}% үнс | NGM ±{NGM_HW}")
     print("═" * 74)
-    # Спек (dry): Sd<1, VMd<25, CSN>=7
-    SPEC = {"sulphur": {"max": 1.0}, "vol": {"max": 25.0}, "csn": {"min": 7.0}}
+    # Спек UHG_MVHCC (Product Target): Sd<0.65 (db), VMdaf<27 (daf), CSN>=7
+    SPEC = {"sulphur": {"max": 0.65}, "vol": {"max": 27.0, "basis": "daf"},
+            "csn": {"min": 7.0}}
     print(f" {'Seam':<6}{'Үнс%':>6}{'cut':>7}{'Гарц%':>7}{'NGM%':>6}"
-          f"{'Sd%':>6}{'VMd%':>6}{'CSN*':>6}  Спек(S/VM/CSN)")
+          f"{'Sd%':>6}{'VMdaf':>6}{'CSN*':>6}  Спек(S/VM/CSN)")
     print("─" * 74)
     rows = []
     for code, fr in sorted(seams.items()):
@@ -77,7 +78,7 @@ def main():
     print("─" * 74)
     # бүрэн спекд тэнцэх (S<1 ба VM<25; CSN лавлагаа тул тусад нь)
     pass_sv = [r for r in rows if r[6]["sulphur"]["ok"] and r[6]["vol"]["ok"] and r[1] >= 40]
-    print(f" Гарц≥40 + Sd<1 + VMd<25 ({len(pass_sv)}): "
+    print(f" Гарц≥40 + Sd<0.65(db) + VMdaf<27 ({len(pass_sv)}): "
           f"{', '.join(r[0] for r in pass_sv) or '—'}")
     print(" * CSN аддитив биш — массаар дунджилсан ойролцоо утга (лаб баталгаажуулна).")
     print("   CSN>=7 нь нэг seam дээр ховор; blend/коксын зууханд эмпирик хянана.")
